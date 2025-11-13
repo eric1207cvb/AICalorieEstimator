@@ -16,4 +16,4 @@ build/
 # Swift Package Manager
 .build/
 Packages/
-*.resolved
+*.resolved*Tests/

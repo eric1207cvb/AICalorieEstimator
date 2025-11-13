@@ -17,7 +17,7 @@ struct CameraPickerView: UIViewControllerRepresentable {
     }
     
     func updateUIViewController(_ uiViewController: UIImagePickerController, context: UIViewControllerRepresentableContext<CameraPickerView>) {
-        // 留空
+        // S留空
     }
     
     func makeCoordinator() -> Coordinator {
