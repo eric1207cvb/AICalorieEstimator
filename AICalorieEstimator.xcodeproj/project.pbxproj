@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4C5BCAEA2EC6DC360046E6EE /* Shimmer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C5BCAE92EC6DC190046E6EE /* Shimmer.swift */; };
+		4C5BCAEC2EC6DC890046E6EE /* SkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C5BCAEB2EC6DC670046E6EE /* SkeletonView.swift */; };
 		4C8D7F6E2EC580DA00B42753 /* CameraPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8D7F6D2EC580DA00B42753 /* CameraPickerView.swift */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +30,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4C5BCAE92EC6DC190046E6EE /* Shimmer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shimmer.swift; sourceTree = "<group>"; };
+		4C5BCAEB2EC6DC670046E6EE /* SkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonView.swift; sourceTree = "<group>"; };
 		4C8D7F3F2EC56D6700B42753 /* AICalorieEstimator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AICalorieEstimator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C8D7F4E2EC56D6900B42753 /* AICalorieEstimatorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AICalorieEstimatorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C8D7F582EC56D6900B42753 /* AICalorieEstimatorUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AICalorieEstimatorUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -93,6 +97,8 @@
 		4C8D7F362EC56D6700B42753 = {
 			isa = PBXGroup;
 			children = (
+				4C5BCAEB2EC6DC670046E6EE /* SkeletonView.swift */,
+				4C5BCAE92EC6DC190046E6EE /* Shimmer.swift */,
 				4C8D7F6D2EC580DA00B42753 /* CameraPickerView.swift */,
 				4C8D7F412EC56D6700B42753 /* AICalorieEstimator */,
 				4C8D7F512EC56D6900B42753 /* AICalorieEstimatorTests */,
@@ -206,11 +212,13 @@
 				};
 			};
 			buildConfigurationList = 4C8D7F3A2EC56D6700B42753 /* Build configuration list for PBXProject "AICalorieEstimator" */;
-			developmentRegion = en;
+			developmentRegion = "zh-Hant";
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hant",
+				ja,
 			);
 			mainGroup = 4C8D7F362EC56D6700B42753;
 			minimizedProjectReferenceProxies = 1;
@@ -255,6 +263,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C5BCAEC2EC6DC890046E6EE /* SkeletonView.swift in Sources */,
+				4C5BCAEA2EC6DC360046E6EE /* Shimmer.swift in Sources */,
 				4C8D7F6E2EC580DA00B42753 /* CameraPickerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -294,6 +304,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -356,6 +367,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
