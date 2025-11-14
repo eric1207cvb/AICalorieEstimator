@@ -6,7 +6,7 @@
 "hint.initial" = "Please tap 'Take Photo' or 'Select from Album'.";
 "hint.loading_upload" = "Uploading Photo...";
 "hint.loading_ai" = "AI is analyzing...";
-"error.timeout" = "Connection timed out.";
+"error.timeout" = "AI Analysis Timed Out. The AI could not process your image within 90 seconds. Please try again.";
 "error.no_connection" = "Could not connect to server.";
 "error.no_internet" = "No internet connection.";
 "error.json_decode" = "Failed to parse server data.";

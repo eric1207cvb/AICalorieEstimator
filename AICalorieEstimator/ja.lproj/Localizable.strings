@@ -6,7 +6,7 @@
 "hint.initial" = "「写真を撮る」または「アルバムから選択」をタップしてください。";
 "hint.loading_upload" = "写真をアップロード中...";
 "hint.loading_ai" = "AI が分析・計算中です...";
-"error.timeout" = "接続がタイムアウトしました。";
+"error.timeout" = "AI 分析がタイムアウトしました。AI が 90 秒以内に画像を処理できませんでした。もう一度お試しください。";
 "error.no_connection" = "サーバーに接続できませんでした。";
 "error.no_internet" = "インターネットに接続されていません。";
 "error.json_decode" = "サーバーデータの解析に失敗しました。";

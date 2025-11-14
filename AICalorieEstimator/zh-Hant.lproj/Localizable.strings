@@ -6,7 +6,7 @@
 "hint.initial" = "請點擊「拍照估算」或「從相簿選取」。";
 "hint.loading_upload" = "正在上傳照片...";
 "hint.loading_ai" = "AI 正在辨識與估算中...";
-"error.timeout" = "連線逾時：AI 處理時間過長。";
+"error.timeout" = "AI 分析逾時。AI 未能在 90 秒內完成辨識，請稍後再試一次。";
 "error.no_connection" = "無法連線到伺服器。";
 "error.no_internet" = "目前沒有網路連線。";
 "error.json_decode" = "伺服器回傳資料格式錯誤。";
