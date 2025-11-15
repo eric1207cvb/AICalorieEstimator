@@ -260,9 +260,15 @@ struct ContentView: View {
                 language: selectedLanguage.rawValue
             )
             self.viewState = .success(responseData)
+            // 觸覺回饋：分析成功
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.success)
         } catch {
             let userMessage = decodeError(error)
             self.viewState = .error(userMessage)
+            // 觸覺回饋：分析失敗
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.error)
         }
     }
 
