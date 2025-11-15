@@ -2,6 +2,7 @@ import UIKit
 import SwiftUI
 import PhotosUI
 import RevenueCat // 導入 RevenueCat SDK
+import StoreKit
 
 // --- 0. Helper & Extension (修正編譯順序) ---
 extension String {
@@ -82,6 +83,8 @@ struct ContentView: View {
     @State private var debugBypassPro: Bool = false
     #endif
     
+    @State private var showManageSubscriptions: Bool = false
+    
     var body: some View {
         // 【!!! v8.2 升級：加入 "導覽列" !!!】
         NavigationStack {
@@ -95,6 +98,34 @@ struct ContentView: View {
                         isProUser: $isProUser, // 傳遞會員狀態
                         isShowingPaywall: $isShowingPaywall // 傳遞新的 Paywall 狀態
                     )
+                    .padding(.horizontal)
+                    
+                    // 訂閱工具列（恢復購買 / 管理訂閱）
+                    HStack {
+                        // 顯示目前 Storefront（若可用）
+                        let storefront = Purchases.shared.storeFrontCountryCode ?? "--"
+                        Text("Storefront: \(storefront)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Restore Purchases") {
+                            Purchases.shared.restorePurchases { customerInfo, error in
+                                if let error = error {
+                                    print("Restore failed: \(error.localizedDescription)")
+                                } else {
+                                    print("Restore succeeded: \(String(describing: customerInfo))")
+                                    // 依現有邏輯，isProUser 會在 fetchOfferings / getCustomerInfo 回來後更新
+                                    // 這裡不需要額外改動狀態
+                                }
+                            }
+                        }
+                        .buttonStyle(.bordered)
+
+                        Button("Manage") {
+                            showManageSubscriptions = true
+                        }
+                        .buttonStyle(.bordered)
+                    }
                     .padding(.horizontal)
                     
                     // 語言選擇器（最小更動）
@@ -223,6 +254,7 @@ struct ContentView: View {
             .navigationBarTitleDisplayMode(.large)
             // 【!!! V12 最終修正：移除 Toolbar 避免 Bug 衝突 !!!】
         }
+        .id(selectedLanguage)
         // Environment 和 ID 綁定已移至 App.swift
         .onAppear {
             fetchOfferings()
@@ -233,6 +265,7 @@ struct ContentView: View {
                 PaywallView(offering: offering)
             }
         }
+        .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
     }
     
     // --- (analyzeImage 函式 - V11 實作鎖定) ---
