@@ -22,7 +22,7 @@ struct AICalorieEstimatorApp: App {
     @AppStorage("selectedLanguage") private var selectedLanguage: AppLanguage = .traditionalChinese
     
     // 2. 在這裡貼上你的「公開 API 金鑰」
-    let REVENUECAT_API_KEY = "appl_fpRkRwniauiPmqhOQFjoPNEOHWR" // 請用你自己的金鑰替換
+    let REVENUECAT_API_KEY = "appl_jOygYGBHCEIfADYbuaAaxYQNdgE" // 請用你自己的金鑰替換
 
     init() {
         // [Init only required for Purchases config]
