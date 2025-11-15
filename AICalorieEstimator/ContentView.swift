@@ -78,6 +78,10 @@ struct ContentView: View {
     @State private var isProUser: Bool = false // V9.1 最終判斷權限
     @State private var isShowingPaywall: Bool = false // V12 升級：控制 Paywall 顯示
     
+    #if DEBUG
+    @State private var debugBypassPro: Bool = false
+    #endif
+    
     var body: some View {
         // 【!!! v8.2 升級：加入 "導覽列" !!!】
         NavigationStack {
@@ -92,6 +96,24 @@ struct ContentView: View {
                         isShowingPaywall: $isShowingPaywall // 傳遞新的 Paywall 狀態
                     )
                     .padding(.horizontal)
+                    
+                    // 語言選擇器（最小更動）
+                    Picker("Language", selection: $selectedLanguage) {
+                        ForEach(AppLanguage.allCases) { lang in
+                            Text(lang.displayName).tag(lang)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal)
+                    
+                    #if DEBUG
+                    // 調試用：繞過 Pro 限制
+                    Toggle(isOn: $debugBypassPro) {
+                        Text("[DEBUG] Bypass Pro Requirement")
+                    }
+                    .toggleStyle(.switch)
+                    .padding(.horizontal)
+                    #endif
                     
                     // (圖片顯示區 - 保持不變)
                     ZStack {
@@ -116,7 +138,7 @@ struct ContentView: View {
                         Button(action: { self.isShowingCamera = true }) {
                             HStack {
                                 Image(systemName: "camera.fill")
-                                Text("button.take_photo".localized)
+                                Text(LocalizedStringKey("button.take_photo"))
                             }.font(.headline).frame(maxWidth: .infinity).padding()
                             .background(Color.green.opacity(0.8)).foregroundStyle(.white).cornerRadius(12)
                         }
@@ -124,7 +146,7 @@ struct ContentView: View {
                         PhotosPicker(selection: $photosPickerItem, matching: .images) {
                             HStack {
                                 Image(systemName: "photo.on.rectangle.angled")
-                                Text("button.select_album".localized)
+                                Text(LocalizedStringKey("button.select_album"))
                             }.font(.headline).frame(maxWidth: .infinity).padding()
                             .background(Color.blue).foregroundStyle(.white).cornerRadius(12)
                         }
@@ -134,7 +156,7 @@ struct ContentView: View {
                     Button(action: { Task { await healthCheck() } }) {
                         HStack {
                             Image(systemName: "waveform.path.ecg")
-                            Text("button.health_check".localized)
+                            Text(LocalizedStringKey("button.health_check"))
                         }.font(.headline).frame(maxWidth: .infinity).padding()
                         .background(Color.orange.opacity(0.9)).foregroundStyle(.white).cornerRadius(12)
                     }
@@ -165,7 +187,7 @@ struct ContentView: View {
                     
                     // --- 結果顯示區 (v5 骨架屏) ---
                     VStack(alignment: .leading) {
-                        Text("label.analysis_result".localized)
+                        Text(LocalizedStringKey("label.analysis_result"))
                             .font(.headline).padding(.bottom, 5)
                         
                         VStack {
@@ -197,7 +219,7 @@ struct ContentView: View {
                 .padding(.top, 1) // (讓 ScrollView 頂部貼齊)
             }
             // --- 【!!! v8.2 升級：標題 & 工具列按鈕 !!!】---
-            .navigationTitle("app.title".localized)
+            .navigationTitle(LocalizedStringKey("app.title"))
             .navigationBarTitleDisplayMode(.large)
             // 【!!! V12 最終修正：移除 Toolbar 避免 Bug 衝突 !!!】
         }
@@ -215,8 +237,13 @@ struct ContentView: View {
     
     // --- (analyzeImage 函式 - V11 實作鎖定) ---
     func analyzeImage(uiImage: UIImage) async {
-        // 【!!! V9 升級：專業版鎖定檢查 !!!】
-        if !isProUser {
+        // 【!!! V9 升級：專業版鎖定檢查 (支援 DEBUG 繞過) !!!】
+        #if DEBUG
+        let shouldBypass = debugBypassPro
+        #else
+        let shouldBypass = false
+        #endif
+        if !isProUser && !shouldBypass {
             // 如果不是 Pro 用戶，顯示鎖定錯誤，並跳出
             self.viewState = .error("error.pro_required".localized)
             return
@@ -400,7 +427,7 @@ struct SubscriptionStatusView: View {
 
 struct InitialHintView: View {
     var body: some View {
-        Text("hint.initial".localized)
+        Text(LocalizedStringKey("hint.initial"))
             .font(.body).foregroundStyle(.gray)
             .frame(maxWidth: .infinity, alignment: .center)
     }
@@ -427,21 +454,21 @@ struct ResultView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
                 VStack(alignment: .leading) {
-                    Text("result.total_calories".localized)
+                    Text(LocalizedStringKey("result.total_calories"))
                         .font(.headline).foregroundStyle(.secondary)
                     Text("\(data.totalCaloriesMin) - \(data.totalCaloriesMax) 卡")
                         .font(.largeTitle).fontWeight(.bold).foregroundStyle(.blue)
                 }
                 Divider()
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("result.items_found".localized)
+                    Text(LocalizedStringKey("result.items_found"))
                         .font(.headline)
                     Text(data.foodList)
                         .font(.body).fontWeight(.semibold)
                 }
                 Divider()
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("result.ai_analysis".localized)
+                    Text(LocalizedStringKey("result.ai_analysis"))
                         .font(.headline)
                     Text(data.reasoning)
                         .font(.body)
@@ -473,3 +500,4 @@ struct ResultView: View {
         ContentView(viewState: .loading("hint.loading_ai"), selectedLanguage: .constant(.traditionalChinese)) // 修正預覽
     }
 }
+
