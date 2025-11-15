@@ -1,17 +1,29 @@
 import UIKit
 import SwiftUI
 import PhotosUI
+import RevenueCat // 導入 RevenueCat SDK
 
-// --- 0. API 設定 ---
+// --- 0. Helper & Extension (修正編譯順序) ---
+extension String {
+    var localized: String {
+        return NSLocalizedString(self, comment: "")
+    }
+    func localized(with arguments: CVarArg...) -> String {
+        return String(format: self.localized, arguments: arguments)
+    }
+}
+
+// --- 1. API 設定 ---
 enum API {
     #if DEBUG
-    static let baseURL = URL(string: "http://172.20.10.3:3000")!
+    // 【!!! 暫時 "改成" 雲端網址來測試 !!!】
+    static let baseURL = URL(string: "/estimate-calories", relativeTo: URL(string: "https://aicalorie-server.onrender.com")!)! // <-- 貼上你的網址
     #else
-    static let baseURL = URL(string: "https.your-prod-domain.com")!
+    static let baseURL = URL(string: "https://your-prod-domain.com")!
     #endif
 }
 
-// --- 1. 資料結構 (v8) ---
+// --- 2. 資料結構 (v8) ---
 struct RequestPayload: Codable {
     let image: String
     let language: String
@@ -23,7 +35,7 @@ struct CloudResponsePayload: Codable, Equatable {
     let reasoning: String
 }
 
-// --- 2. 錯誤類型 ---
+// --- 3. 錯誤類型 ---
 enum CalorieEstimatorError: Error, LocalizedError {
     case imageConversionFailed, jsonEncodingFailed, invalidAPIURL
     var errorDescription: String? {
@@ -35,24 +47,7 @@ enum CalorieEstimatorError: Error, LocalizedError {
     }
 }
 
-// --- 3. 語言選項 ---
-enum AppLanguage: String, CaseIterable, Identifiable {
-    case english = "en"
-    case traditionalChinese = "zh-Hant"
-    case japanese = "ja"
-    
-    var id: String { self.rawValue }
-    
-    var displayName: String {
-        switch self {
-        case .english: return "English"
-        case .traditionalChinese: return "繁體中文"
-        case .japanese: return "日本語"
-        }
-    }
-}
-
-// --- 4. ViewState Enum ---
+// --- 5. ViewState Enum ---
 enum ViewState: Equatable {
     case empty
     case loading(String)
@@ -60,11 +55,15 @@ enum ViewState: Equatable {
     case error(String)
 }
 
-// --- 5. ContentView 主畫面 ---
+// --- 6. ContentView 主畫面 ---
 struct ContentView: View {
     
-    init(viewState: ViewState = .empty) {
+    // 接收來自 App.swift 的語言狀態 (Binding)
+    @Binding var selectedLanguage: AppLanguage
+    
+    init(viewState: ViewState = .empty, selectedLanguage: Binding<AppLanguage>) {
         self._viewState = State(initialValue: viewState)
+        self._selectedLanguage = selectedLanguage // 綁定語言
     }
     
     @State private var selectedImage: Image? = nil
@@ -73,13 +72,26 @@ struct ContentView: View {
     @State private var isShowingCamera = false
     @State private var viewState: ViewState = .empty
     
-    @AppStorage("selectedLanguage") private var selectedLanguage: AppLanguage = .traditionalChinese
+    // 【!!! V9 升級：新增 RevenueCat 狀態變數 !!!】
+    @State private var offerings: Offerings?
+    @State private var rcStatusMessage: String = "正在檢查訂閱狀態..."
+    @State private var isProUser: Bool = false // V9.1 最終判斷權限
+    @State private var isShowingPaywall: Bool = false // V12 升級：控制 Paywall 顯示
     
     var body: some View {
         // 【!!! v8.2 升級：加入 "導覽列" !!!】
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
+                    
+                    // 【!!! V9 升級：訂閱狀態列 !!!】
+                    SubscriptionStatusView(
+                        offerings: $offerings,
+                        statusMessage: $rcStatusMessage,
+                        isProUser: $isProUser, // 傳遞會員狀態
+                        isShowingPaywall: $isShowingPaywall // 傳遞新的 Paywall 狀態
+                    )
+                    .padding(.horizontal)
                     
                     // (圖片顯示區 - 保持不變)
                     ZStack {
@@ -104,15 +116,15 @@ struct ContentView: View {
                         Button(action: { self.isShowingCamera = true }) {
                             HStack {
                                 Image(systemName: "camera.fill")
-                                Text("button.take_photo")
+                                Text("button.take_photo".localized)
                             }.font(.headline).frame(maxWidth: .infinity).padding()
                             .background(Color.green.opacity(0.8)).foregroundStyle(.white).cornerRadius(12)
                         }
                         
                         PhotosPicker(selection: $photosPickerItem, matching: .images) {
                             HStack {
-                                Image(systemName: "photo.on_rectangle.angled")
-                                Text("button.select_album")
+                                Image(systemName: "photo.on.rectangle.angled")
+                                Text("button.select_album".localized)
                             }.font(.headline).frame(maxWidth: .infinity).padding()
                             .background(Color.blue).foregroundStyle(.white).cornerRadius(12)
                         }
@@ -122,7 +134,7 @@ struct ContentView: View {
                     Button(action: { Task { await healthCheck() } }) {
                         HStack {
                             Image(systemName: "waveform.path.ecg")
-                            Text("button.health_check")
+                            Text("button.health_check".localized)
                         }.font(.headline).frame(maxWidth: .infinity).padding()
                         .background(Color.orange.opacity(0.9)).foregroundStyle(.white).cornerRadius(12)
                     }
@@ -135,7 +147,7 @@ struct ContentView: View {
                     .onChange(of: photosPickerItem) { _, newValue in
                         Task {
                             if let data = try? await newValue?.loadTransferable(type: Data.self),
-                               let uiImage = UIImage(data: data) {
+                                let uiImage = UIImage(data: data) {
                                 self.selectedUIImage = uiImage
                             }
                         }
@@ -143,6 +155,7 @@ struct ContentView: View {
                     .onChange(of: selectedUIImage) { _, newImage in
                         if let uiImage = newImage {
                             self.selectedImage = Image(uiImage: uiImage)
+                            // V9 升級：這裡處理圖片切換，並觸發分析
                             Task { await analyzeImage(uiImage: uiImage) }
                         } else {
                             self.selectedImage = nil
@@ -152,7 +165,7 @@ struct ContentView: View {
                     
                     // --- 結果顯示區 (v5 骨架屏) ---
                     VStack(alignment: .leading) {
-                        Text("label.analysis_result")
+                        Text("label.analysis_result".localized)
                             .font(.headline).padding(.bottom, 5)
                         
                         VStack {
@@ -180,46 +193,39 @@ struct ContentView: View {
                     }
                     .padding(.horizontal)
                     
-                    // (我們 "刪除" 了底下的 Picker)
-                    
                 }
                 .padding(.top, 1) // (讓 ScrollView 頂部貼齊)
             }
             // --- 【!!! v8.2 升級：標題 & 工具列按鈕 !!!】---
-            .navigationTitle("app.title") // 1. 把標題 "放" 到導覽列上
-            .navigationBarTitleDisplayMode(.large) // (用大標題)
-            .toolbar {
-                // 2. 在導覽列 "加上" 一個工具列
-                ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    // 3. 在 "右上角" (Trailing)
-                    
-                    // 4. 加入一個 "下拉選單 (Menu)"
-                    Menu {
-                        // 5. 【!!! 把 "Picker" 藏在選單裡 !!!】
-                        Picker("language", selection: $selectedLanguage) {
-                            ForEach(AppLanguage.allCases) { lang in
-                                Text(lang.displayName).tag(lang)
-                            }
-                        }
-                        .pickerStyle(.inline) // (使用 "inline" 樣式，讓它變成選單)
-                        
-                    } label: {
-                        // 6. 選單的 "按鈕"，就是 "地球" 圖示
-                        Image(systemName: "globe")
-                            .font(.title3) // (讓圖示大一點)
-                    }
-                }
+            .navigationTitle("app.title".localized)
+            .navigationBarTitleDisplayMode(.large)
+            // 【!!! V12 最終修正：移除 Toolbar 避免 Bug 衝突 !!!】
+        }
+        // Environment 和 ID 綁定已移至 App.swift
+        .onAppear {
+            fetchOfferings()
+        }
+        .sheet(isPresented: $isShowingPaywall) {
+            if let offering = offerings?.current {
+                // 傳遞正確的 Offering 資料給 Paywall
+                PaywallView(offering: offering)
             }
         }
-        // 【!!! v8 升級：強制 App 使用 "使用者選擇" 的語言 !!!】
-        .environment(\.locale, .init(identifier: selectedLanguage.rawValue))
     }
     
-    // --- (analyzeImage 函式 保持不變) ---
+    // --- (analyzeImage 函式 - V11 實作鎖定) ---
     func analyzeImage(uiImage: UIImage) async {
-        self.viewState = .loading("hint.loading_upload")
+        // 【!!! V9 升級：專業版鎖定檢查 !!!】
+        if !isProUser {
+            // 如果不是 Pro 用戶，顯示鎖定錯誤，並跳出
+            self.viewState = .error("error.pro_required".localized)
+            return
+        }
+        // 【!!! 如果是 Pro 用戶，才執行原本的分析邏輯 !!!】
+        
+        self.viewState = .loading("hint.loading_upload".localized)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-             self.viewState = .loading("hint.loading_ai")
+            self.viewState = .loading("hint.loading_ai".localized)
         }
         do {
             let responseData = try await fetchCaloriesFromImage(
@@ -264,9 +270,9 @@ struct ContentView: View {
         }
     }
     
-    // --- (healthCheck 函式 保持不變) ---
+    // --- (healthCheck 函式 保持不變 - 修正了 requestBody 錯誤) ---
     func healthCheck() async {
-        self.viewState = .loading("hint.loading_ai")
+        self.viewState = .loading("hint.loading_ai".localized)
         do {
             guard let url = URL(string: "/health", relativeTo: API.baseURL) else {
                 throw CalorieEstimatorError.invalidAPIURL
@@ -274,9 +280,10 @@ struct ContentView: View {
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
             request.timeoutInterval = 15
+            // 修正：刪除了 request.requestBody = nil
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse, (200..<300).contains(httpResponse.statusCode) else {
-                 throw URLError(.badServerResponse)
+                throw URLError(.badServerResponse)
             }
             let body = String(data: data, encoding: .utf8) ?? "(無 body)"
             self.viewState = .error("health_check.success".localized + "\nBody: \(body)")
@@ -301,15 +308,99 @@ struct ContentView: View {
             return error.localizedDescription
         }
     }
+    
+    // 【!!! V9 升級：新增 RevenueCat 函數 - 最終版 !!!】
+    func fetchOfferings() {
+        Purchases.shared.getOfferings { (offerings, error) in
+            // 處理 Offerings 錯誤 (如果 Product Catalog 是空的，會在這裡報錯)
+            if let error = error {
+                print("RevenueCat Error: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.rcStatusMessage = "無法連接訂閱服務。請檢查網路或 App Store 狀態。"
+                }
+                // 即使 Offerings 失敗，也要繼續檢查用戶狀態
+            }
+
+            // 檢查 CustomerInfo (會員狀態)
+            Purchases.shared.getCustomerInfo { (customerInfo, error) in
+                // 檢查用戶是否有我們在 RevenueCat 設定的 "pro" 會員資格
+                let isPro = customerInfo?.entitlements.active.keys.contains("pro") ?? false
+                
+                // 成功取得，更新狀態
+                DispatchQueue.main.async {
+                    self.offerings = offerings
+                    self.isProUser = isPro // V9.1 關鍵：更新會員狀態
+                    
+                    if isPro {
+                        self.rcStatusMessage = "會員狀態：專業版 (Pro) 已解鎖！"
+                        print("✅ 用戶是專業版會員！")
+                    } else if offerings?.current != nil { // 檢查是否有至少一個 Offering
+                         // Offerings 載入成功，但用戶不是 Pro
+                        self.rcStatusMessage = "連線成功。請點擊購買按鈕解鎖專業版。"
+                    } else {
+                        // 初始 Offerings 失敗 (Product Catalog is empty)
+                         self.rcStatusMessage = "產品目錄未載入。請檢查 RevenueCat 設定。"
+                    }
+                }
+            }
+        }
+    }
 }
 
+// --- V9 Helper View 訂閱狀態顯示區 ---
+struct SubscriptionStatusView: View {
+    @Binding var offerings: Offerings?
+    @Binding var statusMessage: String
+    @Binding var isProUser: Bool // 接收會員狀態
+    @Binding var isShowingPaywall: Bool // 【V12 升級：控制 Paywall 狀態】
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("label.subscription_status".localized)
+                .font(.subheadline)
+                .fontWeight(.bold)
+            
+            // 檢查是否成功找到方案
+            if isProUser {
+                 // 狀態 1: 專業版已解鎖
+                 Text("✅ 專業版已解鎖")
+                     .foregroundColor(.green)
+            } else {
+                 // 狀態 2: 未解鎖，顯示錯誤/購買按鈕
+                 VStack(alignment: .leading, spacing: 10) {
+                     // 顯示錯誤訊息 (因為目錄是空的)
+                     HStack {
+                        Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.red)
+                        Text("❌ \(statusMessage)")
+                            .font(.caption)
+                            .multilineTextAlignment(.leading)
+                            .foregroundColor(.red)
+                     }
+                     
+                     // 【!!! 最終 UI 突圍：強制顯示購買按鈕 !!!】
+                     // 無論 offerings 是否為空，只要不是 Pro，就顯示這個按鈕
+                     Button("立即解鎖 Pro 功能") {
+                         self.isShowingPaywall = true
+                     }
+                     .buttonStyle(.borderedProminent)
+                     .tint(.red) // 顯示為紅色，提醒用戶升級
+                     
+                 }
+            }
+        }
+        .padding()
+        .background(isProUser ? Color.green.opacity(0.1) : Color.red.opacity(0.1)) // 根據 Pro 狀態改變背景色
+        .cornerRadius(10)
+    }
+}
+
+
 // --- 7. 拆分出來的「子畫面」 (View Components) ---
-// (InitialHintView, ErrorView, ResultView)
-// (這些 "必須" 保留)
+// (保持不變)
 
 struct InitialHintView: View {
     var body: some View {
-        Text("hint.initial")
+        Text("hint.initial".localized)
             .font(.body).foregroundStyle(.gray)
             .frame(maxWidth: .infinity, alignment: .center)
     }
@@ -336,21 +427,21 @@ struct ResultView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
                 VStack(alignment: .leading) {
-                    Text("result.total_calories") // (使用 Key)
+                    Text("result.total_calories".localized)
                         .font(.headline).foregroundStyle(.secondary)
                     Text("\(data.totalCaloriesMin) - \(data.totalCaloriesMax) 卡")
                         .font(.largeTitle).fontWeight(.bold).foregroundStyle(.blue)
                 }
                 Divider()
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("result.items_found") // (使用 Key)
+                    Text("result.items_found".localized)
                         .font(.headline)
                     Text(data.foodList)
                         .font(.body).fontWeight(.semibold)
                 }
                 Divider()
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("result.ai_analysis") // (使用 Key)
+                    Text("result.ai_analysis".localized)
                         .font(.headline)
                     Text(data.reasoning)
                         .font(.body)
@@ -358,16 +449,6 @@ struct ResultView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-// --- 10. (Helper 保持不變) ---
-extension String {
-    var localized: String {
-        return NSLocalizedString(self, comment: "")
-    }
-    func localized(with arguments: CVarArg...) -> String {
-        return String(format: self.localized, arguments: arguments)
     }
 }
 
@@ -382,13 +463,13 @@ extension String {
                 totalCaloriesMax: 140,
                 reasoning: "Based on the image, this is one 330ml can of Coca-Cola, which is approx 140 calories."
             )
-        ))
+        ), selectedLanguage: .constant(.traditionalChinese)) // 修正預覽
         .environment(\.locale, .init(identifier: "en"))
     }
 }
 #Preview("預覽 - 骨架屏 (v5)") {
     // (包在 NavigationStack 裡)
     NavigationStack {
-        ContentView(viewState: .loading("hint.loading_ai"))
+        ContentView(viewState: .loading("hint.loading_ai"), selectedLanguage: .constant(.traditionalChinese)) // 修正預覽
     }
 }

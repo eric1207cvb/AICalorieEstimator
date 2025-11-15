@@ -1,18 +1,29 @@
+/* App Title */
 "app.title" = "AI Calorie Estimator";
+
+/* Button Texts */
 "button.take_photo" = "Take Photo";
 "button.select_album" = "Select from Album";
 "button.health_check" = "Test Connection";
-"label.analysis_result" = "Analysis Result:";
-"hint.initial" = "Please tap 'Take Photo' or 'Select from Album'.";
-"hint.loading_upload" = "Uploading Photo...";
-"hint.loading_ai" = "AI is analyzing...";
-"error.timeout" = "AI Analysis Timed Out. The AI could not process your image within 90 seconds. Please try again.";
-"error.no_connection" = "Could not connect to server.";
-"error.no_internet" = "No internet connection.";
-"error.json_decode" = "Failed to parse server data.";
-"health_check.success" = "✅ Health Check OK!";
-"health_check.fail" = "❌ Connection Failed: %@";
-"result.total_calories" = "Total Estimated Calories";
-"result.items_found" = "Items Found:";
-"result.ai_analysis" = "AI Estimation Process:";
-"language" = "Language";
+
+/* Interface Labels */
+"label.analysis_result" = "Analysis Result";
+"label.subscription_status" = "Subscription Status";
+
+/* Initial and Loading Hints */
+"hint.initial" = "Tap 'Take Photo' or 'Select from Album' to start analysis.";
+"hint.loading_upload" = "Uploading image and preparing analysis...";
+"hint.loading_ai" = "AI Analysis in progress, please wait...";
+
+/* Results */
+"result.total_calories" = "Estimated Total Calories";
+"result.items_found" = "Detected Food Items";
+"result.ai_analysis" = "AI Analysis and Reasoning";
+
+/* Errors and Status */
+"health_check.success" = "✅ Server Connection Successful!";
+"health_check.fail" = "❌ Server Connection Failed: %@";
+"error.timeout" = "Network connection timed out. Please check server status.";
+"error.no_connection" = "Cannot connect to server. Please check your network connection.";
+"error.json_decode" = "Data parsing error. Please retry.";
+"error.pro_required" = "You need to upgrade to Pro to use the AI analysis feature.";

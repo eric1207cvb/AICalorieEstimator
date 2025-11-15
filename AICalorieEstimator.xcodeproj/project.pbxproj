@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		4C5BCAEA2EC6DC360046E6EE /* Shimmer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C5BCAE92EC6DC190046E6EE /* Shimmer.swift */; };
 		4C5BCAEC2EC6DC890046E6EE /* SkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C5BCAEB2EC6DC670046E6EE /* SkeletonView.swift */; };
+		4C5BCAFC2EC80F500046E6EE /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C5BCAFB2EC80F3A0046E6EE /* PaywallView.swift */; };
+		4C5BCAFF2EC818570046E6EE /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 4C5BCAFE2EC818570046E6EE /* RevenueCat */; };
+		4C5BCB012EC818570046E6EE /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 4C5BCB002EC818570046E6EE /* RevenueCatUI */; };
 		4C8D7F6E2EC580DA00B42753 /* CameraPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8D7F6D2EC580DA00B42753 /* CameraPickerView.swift */; };
 /* End PBXBuildFile section */
 
@@ -32,6 +35,7 @@
 /* Begin PBXFileReference section */
 		4C5BCAE92EC6DC190046E6EE /* Shimmer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shimmer.swift; sourceTree = "<group>"; };
 		4C5BCAEB2EC6DC670046E6EE /* SkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonView.swift; sourceTree = "<group>"; };
+		4C5BCAFB2EC80F3A0046E6EE /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		4C8D7F3F2EC56D6700B42753 /* AICalorieEstimator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AICalorieEstimator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C8D7F4E2EC56D6900B42753 /* AICalorieEstimatorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AICalorieEstimatorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C8D7F582EC56D6900B42753 /* AICalorieEstimatorUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AICalorieEstimatorUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -74,6 +78,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C5BCB012EC818570046E6EE /* RevenueCatUI in Frameworks */,
+				4C5BCAFF2EC818570046E6EE /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -94,15 +100,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4C5BCAF82EC71CA50046E6EE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		4C8D7F362EC56D6700B42753 = {
 			isa = PBXGroup;
 			children = (
+				4C5BCAFB2EC80F3A0046E6EE /* PaywallView.swift */,
 				4C5BCAEB2EC6DC670046E6EE /* SkeletonView.swift */,
 				4C5BCAE92EC6DC190046E6EE /* Shimmer.swift */,
 				4C8D7F6D2EC580DA00B42753 /* CameraPickerView.swift */,
 				4C8D7F412EC56D6700B42753 /* AICalorieEstimator */,
 				4C8D7F512EC56D6900B42753 /* AICalorieEstimatorTests */,
 				4C8D7F5B2EC56D6900B42753 /* AICalorieEstimatorUITests */,
+				4C5BCAF82EC71CA50046E6EE /* Frameworks */,
 				4C8D7F402EC56D6700B42753 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -137,6 +152,8 @@
 			);
 			name = AICalorieEstimator;
 			packageProductDependencies = (
+				4C5BCAFE2EC818570046E6EE /* RevenueCat */,
+				4C5BCB002EC818570046E6EE /* RevenueCatUI */,
 			);
 			productName = AICalorieEstimator;
 			productReference = 4C8D7F3F2EC56D6700B42753 /* AICalorieEstimator.app */;
@@ -222,6 +239,9 @@
 			);
 			mainGroup = 4C8D7F362EC56D6700B42753;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4C5BCAFD2EC818570046E6EE /* XCRemoteSwiftPackageReference "purchases-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4C8D7F402EC56D6700B42753 /* Products */;
 			projectDirPath = "";
@@ -263,6 +283,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C5BCAFC2EC80F500046E6EE /* PaywallView.swift in Sources */,
 				4C5BCAEC2EC6DC890046E6EE /* SkeletonView.swift in Sources */,
 				4C5BCAEA2EC6DC360046E6EE /* Shimmer.swift in Sources */,
 				4C8D7F6E2EC580DA00B42753 /* CameraPickerView.swift in Sources */,
@@ -653,6 +674,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4C5BCAFD2EC818570046E6EE /* XCRemoteSwiftPackageReference "purchases-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.48.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4C5BCAFE2EC818570046E6EE /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4C5BCAFD2EC818570046E6EE /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCat;
+		};
+		4C5BCB002EC818570046E6EE /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4C5BCAFD2EC818570046E6EE /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCatUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4C8D7F372EC56D6700B42753 /* Project object */;
 }

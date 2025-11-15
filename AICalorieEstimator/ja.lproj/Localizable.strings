@@ -1,18 +1,29 @@
-"app.title" = "AI カロリー計算";
+/* App Title */
+"app.title" = "AI カロリー推定";
+
+/* Button Texts */
 "button.take_photo" = "写真を撮る";
 "button.select_album" = "アルバムから選択";
 "button.health_check" = "接続テスト";
-"label.analysis_result" = "分析結果：";
-"hint.initial" = "「写真を撮る」または「アルバムから選択」をタップしてください。";
-"hint.loading_upload" = "写真をアップロード中...";
-"hint.loading_ai" = "AI が分析・計算中です...";
-"error.timeout" = "AI 分析がタイムアウトしました。AI が 90 秒以内に画像を処理できませんでした。もう一度お試しください。";
-"error.no_connection" = "サーバーに接続できませんでした。";
-"error.no_internet" = "インターネットに接続されていません。";
-"error.json_decode" = "サーバーデータの解析に失敗しました。";
-"health_check.success" = "✅ 接続OK！";
-"health_check.fail" = "❌ 接続失敗: %@";
-"result.total_calories" = "総推定カロリー";
-"result.items_found" = "認識された項目：";
-"result.ai_analysis" = "AI の計算プロセス：";
-"language" = "言語";
+
+/* Interface Labels */
+"label.analysis_result" = "分析結果";
+"label.subscription_status" = "購読ステータス";
+
+/* Initial and Loading Hints */
+"hint.initial" = "分析を開始するには、「写真を撮る」または「アルバムから選択」をタップしてください。";
+"hint.loading_upload" = "画像をアップロードし、分析を準備中...";
+"hint.loading_ai" = "AI分析中です、お待ちください...";
+
+/* Results */
+"health_check.success" = "✅ サーバー接続に成功しました！";
+"health_check.fail" = "❌ サーバー接続に失敗しました: %@";
+"result.total_calories" = "推定総カロリー";
+"result.items_found" = "検出された食品項目";
+"result.ai_analysis" = "AI分析と推論";
+
+/* Errors and Status */
+"error.timeout" = "ネットワーク接続がタイムアウトしました。サーバー状態を確認してください。";
+"error.no_connection" = "サーバーに接続できません。ネットワーク接続を確認してください。";
+"error.json_decode" = "データ解析エラーです。再試行してください。";
+"error.pro_required" = "AI分析機能をご利用いただくには、Proプレミアムへのアップグレードが必要です。";
