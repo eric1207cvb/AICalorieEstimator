@@ -233,7 +233,7 @@ struct ContentView: View {
                                     .padding(.top, 10)
                                     .animation(.easeInOut, value: message)
                             case .success(let payload):
-                                ResultView(data: payload)
+                                ResultView(data: payload, language: selectedLanguage)
                             case .error(let errorMessage):
                                 ErrorView(message: errorMessage)
                             }
@@ -486,16 +486,17 @@ struct ErrorView: View {
     }
 }
 
-// (ResultView v8 版)
+// (ResultView v8 版) -> Modified per instructions
 struct ResultView: View {
     let data: CloudResponsePayload
+    let language: AppLanguage
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
                 VStack(alignment: .leading) {
                     Text(LocalizedStringKey("result.total_calories"))
                         .font(.headline).foregroundStyle(.secondary)
-                    Text("\(data.totalCaloriesMin) - \(data.totalCaloriesMax) 卡")
+                    Text(formatEstimatedCalories(min: data.totalCaloriesMin, max: data.totalCaloriesMax, language: language))
                         .font(.largeTitle).fontWeight(.bold).foregroundStyle(.blue)
                 }
                 Divider()
@@ -530,7 +531,7 @@ struct ResultView: View {
                 reasoning: "Based on the image, this is one 330ml can of Coca-Cola, which is approx 140 calories."
             )
         ), selectedLanguage: .constant(.traditionalChinese)) // 修正預覽
-        .environment(\.locale, .init(identifier: "en"))
+        .environment(\.locale, Locale(identifier: "en"))
     }
 }
 #Preview("預覽 - 骨架屏 (v5)") {
@@ -538,5 +539,27 @@ struct ResultView: View {
     NavigationStack {
         ContentView(viewState: .loading("hint.loading_ai"), selectedLanguage: .constant(.traditionalChinese)) // 修正預覽
     }
+}
+
+
+// MARK: - Calorie Display Formatter
+
+/// Formats an estimated calories range and applies locale-specific unit normalization.
+/// - Parameters:
+///   - min: Lower bound value (inclusive).
+///   - max: Upper bound value (inclusive).
+///   - language: Current app language controlling unit output.
+/// - Returns: A string like "30 - 50 大卡" (ZH-TW), "30 - 50 kcal" (EN), or "30 - 50 キロカロリー" (JA).
+func formatEstimatedCalories(min: Int, max: Int, language: AppLanguage) -> String {
+    let unit: String
+    switch language {
+    case .traditionalChinese:
+        unit = "大卡"
+    case .english:
+        unit = "kcal"
+    case .japanese:
+        unit = "キロカロリー"
+    }
+    return "\(min) - \(max) \(unit)"
 }
 
