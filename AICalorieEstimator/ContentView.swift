@@ -3,6 +3,7 @@ import SwiftUI
 import PhotosUI
 import RevenueCat // 導入 RevenueCat SDK
 import StoreKit
+import AVFoundation
 
 // --- 0. Helper & Extension (修正編譯順序) ---
 extension String {
@@ -17,8 +18,7 @@ extension String {
 // --- 1. API 設定 ---
 enum API {
     #if DEBUG
-    // 【!!! 暫時 "改成" 雲端網址來測試 !!!】
-    static let baseURL = URL(string: "/estimate-calories", relativeTo: URL(string: "https://aicalorie-server.onrender.com")!)! // <-- 貼上你的網址
+    static let baseURL = URL(string: "https://aicalorie-server.onrender.com")!
     #else
     static let baseURL = URL(string: "https://your-prod-domain.com")!
     #endif
@@ -73,6 +73,9 @@ struct ContentView: View {
     @State private var isShowingCamera = false
     @State private var viewState: ViewState = .empty
     
+    // 新增 camera unavailable alert 狀態
+    @State private var cameraUnavailableAlert: Bool = false
+    
     // 【!!! V9 升級：新增 RevenueCat 狀態變數 !!!】
     @State private var offerings: Offerings?
     @State private var rcStatusMessage: String = "正在檢查訂閱狀態..."
@@ -84,6 +87,20 @@ struct ContentView: View {
     #endif
     
     @State private var showManageSubscriptions: Bool = false
+    
+    // 新增相機授權檢查函式
+    func ensureCameraAuthorized() async -> Bool {
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        switch status {
+        case .authorized:
+            return UIImagePickerController.isSourceTypeAvailable(.camera)
+        case .notDetermined:
+            let granted = await AVCaptureDevice.requestAccess(for: .video)
+            return granted && UIImagePickerController.isSourceTypeAvailable(.camera)
+        default:
+            return false
+        }
+    }
     
     var body: some View {
         // 【!!! v8.2 升級：加入 "導覽列" !!!】
@@ -166,7 +183,15 @@ struct ContentView: View {
                     
                     // --- 按鈕區 (v8) ---
                     HStack(spacing: 15) {
-                        Button(action: { self.isShowingCamera = true }) {
+                        Button(action: {
+                            Task {
+                                if await ensureCameraAuthorized() {
+                                    self.isShowingCamera = true
+                                } else {
+                                    self.cameraUnavailableAlert = true
+                                }
+                            }
+                        }) {
                             HStack {
                                 Image(systemName: "camera.fill")
                                 Text(LocalizedStringKey("button.take_photo"))
@@ -214,6 +239,11 @@ struct ContentView: View {
                             self.selectedImage = nil
                             self.viewState = .empty
                         }
+                    }
+                    .alert("相機不可用", isPresented: $cameraUnavailableAlert) {
+                        Button("OK", role: .cancel) { }
+                    } message: {
+                        Text("此裝置無相機或未授權使用相機，請改用相簿選取照片。")
                     }
                     
                     // --- 結果顯示區 (v5 骨架屏) ---
@@ -294,14 +324,12 @@ struct ContentView: View {
             )
             self.viewState = .success(responseData)
             // 觸覺回饋：分析成功
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.success)
+            playHaptic(.success)
         } catch {
             let userMessage = decodeError(error)
             self.viewState = .error(userMessage)
             // 觸覺回饋：分析失敗
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.error)
+            playHaptic(.error)
         }
     }
 
@@ -315,9 +343,8 @@ struct ContentView: View {
         guard let encodedPayload = try? JSONEncoder().encode(payload) else {
             throw CalorieEstimatorError.jsonEncodingFailed
         }
-        guard let url = URL(string: "/estimate-calories", relativeTo: API.baseURL) else {
-            throw CalorieEstimatorError.invalidAPIURL
-        }
+        // 修改 URL 建構方式，不使用相對路徑字串
+        let url = API.baseURL.appendingPathComponent("estimate-calories")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -340,19 +367,23 @@ struct ContentView: View {
     func healthCheck() async {
         self.viewState = .loading("hint.loading_ai".localized)
         do {
-            guard let url = URL(string: "/health", relativeTo: API.baseURL) else {
-                throw CalorieEstimatorError.invalidAPIURL
-            }
+            let url = API.baseURL.appendingPathComponent("health")
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
             request.timeoutInterval = 15
-            // 修正：刪除了 request.requestBody = nil
+
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse, (200..<300).contains(httpResponse.statusCode) else {
+            guard let httpResponse = response as? HTTPURLResponse else {
                 throw URLError(.badServerResponse)
             }
-            let body = String(data: data, encoding: .utf8) ?? "(無 body)"
-            self.viewState = .error("health_check.success".localized + "\nBody: \(body)")
+            if (200..<300).contains(httpResponse.statusCode) {
+                let body = String(data: data, encoding: .utf8) ?? "(無 body)"
+                self.viewState = .success(CloudResponsePayload(foodList: "", totalCaloriesMin: 0, totalCaloriesMax: 0, reasoning: "health_check.success".localized + "\nBody: \(body)"))
+            } else {
+                let snippet = String(data: data.prefix(200), encoding: .utf8) ?? ""
+                let message = "HTTP \(httpResponse.statusCode). \("error.bad_server_response".localized)\n\(snippet)"
+                self.viewState = .error(message)
+            }
         } catch {
             let userMessage = decodeError(error)
             self.viewState = .error("health_check.fail".localized(with: userMessage))
@@ -373,6 +404,16 @@ struct ContentView: View {
         } else {
             return error.localizedDescription
         }
+    }
+    
+    func playHaptic(_ type: UINotificationFeedbackGenerator.FeedbackType) {
+        #if targetEnvironment(simulator)
+        return
+        #else
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(type)
+        #endif
     }
     
     // 【!!! V9 升級：新增 RevenueCat 函數 - 最終版 !!!】

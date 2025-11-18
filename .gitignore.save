@@ -48,4 +48,3 @@ fastlane/test_output
 *.swp
 *.lock
 *.orig
-
