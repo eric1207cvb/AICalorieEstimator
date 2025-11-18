@@ -15,19 +15,15 @@ build/
 *.moved-aside
 *.xcscmblueprint
 
-# If you DO NOT use CocoaPods workspace, you can ignore all .xcworkspace
-# 但如果你用 CocoaPods，請不要忽略 .xcworkspace
-# *.xcworkspace
-
 # Swift Package Manager
 .build/
-# 如果你想鎖定依賴版本，請不要忽略 Package.resolved；否則就忽略它
-# Package.resolved
+# 若你希望鎖定依賴版本，請不要忽略 Package.resolved（我們要提交）
+# （因此這裡不要寫 Package.resolved）
 
-# Swift Packages (本地 Packages/ 目錄通常是你自己的套件原始碼，建議不要忽略)
+# Swift Packages（通常是你自己的套件原始碼，建議不要忽略）
 # Packages/
 
-# CocoaPods (如果你使用 Pods，建議忽略整個 Pods 目錄與 .xcworkspace)
+# CocoaPods（若你使用 Pods，建議忽略）
 Pods/
 *.xcworkspace
 
@@ -48,4 +44,3 @@ fastlane/test_output
 *.swp
 *.lock
 *.orig
-
