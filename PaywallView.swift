@@ -37,15 +37,33 @@ struct PaywallView: View {
                 
                 // 3. 恢復購買按鈕
                 Button("Restore Purchases") {
-                    // TODO: 恢復購買邏輯
+                    Task {
+                        do {
+                            let info = try await Purchases.shared.restorePurchases()
+                            // 可在此依權益判斷是否關閉付費牆
+                            _ = info.activeSubscriptions
+                        } catch {
+                            // 這裡可以顯示錯誤給使用者
+                            print("Restore failed: \(error)")
+                        }
+                    }
                 }
                 .font(.callout)
                 
-                // 4. 服務條款
-                Text("By subscribing, you agree to our Terms of Service.")
+                // 法遵連結（可點擊）
+                HStack(spacing: 16) {
+                    Link("Terms of Use", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                    Link("Privacy Policy", destination: URL(string: "https://eric1207cvb.github.io/hsuehyian-pages/")!)
+                }
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .padding(.top, 4)
+                
+                Text("By subscribing, you agree to our Terms of Use and Privacy Policy. Subscription auto-renews unless canceled at least 24 hours before the end of the current period. Manage or cancel in your App Store account settings.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .padding(.top, 10)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 4)
             }
             .padding()
             .toolbar {
@@ -75,12 +93,54 @@ struct PackageCell: View {
             }
             Spacer()
             
-            // 價格按鈕
-            Button(package.localizedPriceString) {
-                // TODO: 購買觸發點
+            // 價格按鈕與期間
+            VStack(alignment: .trailing, spacing: 4) {
+                Button(package.localizedPriceString) {
+                    Task {
+                        do {
+                            let result = try await Purchases.shared.purchase(package: package)
+                            if !result.userCancelled {
+                                // 成功購買，這裡可透過通知或環境關閉付費牆
+                                print("Purchase success: \(String(describing: result.customerInfo.activeSubscriptions))")
+                            }
+                        } catch {
+                            print("Purchase failed: \(error)")
+                        }
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+
+                if let period = periodText(for: package) {
+                    Text(period)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.trailing)
+                }
             }
-            .buttonStyle(.borderedProminent)
         }
+    }
+    
+    private func periodText(for package: Package) -> String? {
+        if let period = package.storeProduct.subscriptionPeriod {
+            switch (period.unit, period.value) {
+            case (.day, 1): return "per day"
+            case (.week, 1): return "per week"
+            case (.month, 1): return "per month"
+            case (.year, 1): return "per year"
+            default:
+                // Fallback for multi-periods, e.g., every 3 months
+                let unit: String
+                switch period.unit {
+                case .day: unit = "days"
+                case .week: unit = "weeks"
+                case .month: unit = "months"
+                case .year: unit = "years"
+                @unknown default: unit = "periods"
+                }
+                return "every \(period.value) \(unit)"
+            }
+        }
+        return nil
     }
 }
 

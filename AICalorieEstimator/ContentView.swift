@@ -20,7 +20,7 @@ enum API {
     #if DEBUG
     static let baseURL = URL(string: "https://aicalorie-server.onrender.com")!
     #else
-    static let baseURL = URL(string: "https://your-prod-domain.com")!
+    static let baseURL = URL(string: "https://aicalorie-server.onrender.com")!
     #endif
 }
 
@@ -82,8 +82,11 @@ struct ContentView: View {
     @State private var isProUser: Bool = false // V9.1 最終判斷權限
     @State private var isShowingPaywall: Bool = false // V12 升級：控制 Paywall 顯示
     
+    // 新增 RevenueCat 顯示錯誤 Alert 狀態
+    @State private var showRCAlert: Bool = false
+    
     #if DEBUG
-    @State private var debugBypassPro: Bool = false
+    @State private var debugBypassPro: Bool = true
     #endif
     
     @State private var showManageSubscriptions: Bool = false
@@ -152,6 +155,20 @@ struct ContentView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    .padding(.horizontal)
+                    
+                    // 條款與隱私區塊
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("條款與隱私")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.secondary)
+                        HStack(spacing: 16) {
+                            Link("Privacy Policy", destination: URL(string: "https://eric1207cvb.github.io/hsuehyian-pages/")!)
+                            Link("Terms of Use (EULA)", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                        }
+                        .font(.footnote)
+                    }
                     .padding(.horizontal)
                     
                     #if DEBUG
@@ -291,11 +308,24 @@ struct ContentView: View {
         }
         .sheet(isPresented: $isShowingPaywall) {
             if let offering = offerings?.current {
-                // 傳遞正確的 Offering 資料給 Paywall
                 PaywallView(offering: offering)
+            } else {
+                VStack(spacing: 12) {
+                    ProgressView()
+                    Text("正在載入產品…")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .padding()
+                .onAppear { fetchOfferings() }
             }
         }
         .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
+        .alert("無法顯示購買頁面", isPresented: $showRCAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(rcStatusMessage)
+        }
     }
     
     // --- (analyzeImage 函式 - V11 實作鎖定) ---
