@@ -90,6 +90,7 @@ struct ContentView: View {
     #endif
     
     @State private var showManageSubscriptions: Bool = false
+    @State private var isShowingSubscriptionInfo: Bool = false // 新增訂閱資訊 sheet 狀態
     
     // 新增相機授權檢查函式
     func ensureCameraAuthorized() async -> Bool {
@@ -147,6 +148,27 @@ struct ContentView: View {
                         .buttonStyle(.bordered)
                     }
                     .padding(.horizontal)
+                    
+                    // 訂閱資訊（條款與價格/週期）
+                    Button {
+                        isShowingSubscriptionInfo = true
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "doc.text.magnifyingglass")
+                            Text("Subscription Terms & Info")
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.footnote)
+                        }
+                        .font(.footnote)
+                        .padding(12)
+                        .background(Color.gray.opacity(0.12))
+                        .cornerRadius(10)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal)
+                    .sheet(isPresented: $isShowingSubscriptionInfo) {
+                        SubscriptionInfoView(offerings: offerings)
+                    }
                     
                     // 語言選擇器（最小更動）
                     Picker("Language", selection: $selectedLanguage) {
@@ -257,6 +279,14 @@ struct ContentView: View {
                             self.viewState = .empty
                         }
                     }
+                    .onChange(of: isShowingPaywall) { _, newValue in
+                        if newValue == false { // Paywall closed
+                            Purchases.shared.getCustomerInfo { info, _ in
+                                let isPro = info?.entitlements.active.keys.contains("pro") ?? false
+                                DispatchQueue.main.async { self.isProUser = isPro }
+                            }
+                        }
+                    }
                     .alert("相機不可用", isPresented: $cameraUnavailableAlert) {
                         Button("OK", role: .cancel) { }
                     } message: {
@@ -306,6 +336,17 @@ struct ContentView: View {
         .onAppear {
             fetchOfferings()
         }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("proStatusUpdated"))) { output in
+            if let isPro = output.object as? Bool {
+                self.isProUser = isPro
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            Purchases.shared.getCustomerInfo { info, _ in
+                let isPro = info?.entitlements.active.keys.contains("pro") ?? false
+                DispatchQueue.main.async { self.isProUser = isPro }
+            }
+        }
         .sheet(isPresented: $isShowingPaywall) {
             if let offering = offerings?.current {
                 PaywallView(offering: offering)
@@ -318,6 +359,15 @@ struct ContentView: View {
                 }
                 .padding()
                 .onAppear { fetchOfferings() }
+            }
+        }
+        .onDisappear {
+            // Refresh CustomerInfo when paywall closes
+            Purchases.shared.getCustomerInfo { info, _ in
+                let isPro = info?.entitlements.active.keys.contains("pro") ?? false
+                DispatchQueue.main.async {
+                    self.isProUser = isPro
+                }
             }
         }
         .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
@@ -632,5 +682,90 @@ func formatEstimatedCalories(min: Int, max: Int, language: AppLanguage) -> Strin
         unit = "キロカロリー"
     }
     return "\(min) - \(max) \(unit)"
+}
+
+
+// MARK: - Subscription Info View (for App Review compliance)
+struct SubscriptionInfoView: View {
+    let offerings: Offerings?
+
+    // Helper to extract a representative package for display
+    private var displayPackage: Package? {
+        if let current = offerings?.current {
+            // prefer monthly if available
+            if let monthly = current.availablePackages.first(where: { $0.packageType == .monthly }) {
+                return monthly
+            }
+            return current.availablePackages.first
+        }
+        return nil
+    }
+
+    // Derived properties
+    private var title: String {
+        if let pkg = displayPackage {
+            return pkg.storeProduct.localizedTitle
+        }
+        return "Pro Subscription"
+    }
+
+    private var priceString: String {
+        if let pkg = displayPackage {
+            return pkg.localizedPriceString
+        }
+        return "—"
+    }
+
+    private var periodDescription: String {
+        if let pkg = displayPackage, let period = pkg.storeProduct.subscriptionPeriod {
+            switch (period.unit, period.value) {
+            case (.day, 1): return "Daily"
+            case (.day, _): return "Every \(period.value) days"
+            case (.week, 1): return "Weekly"
+            case (.week, _): return "Every \(period.value) weeks"
+            case (.month, 1): return "Monthly"
+            case (.month, _): return "Every \(period.value) months"
+            case (.year, 1): return "Yearly"
+            case (.year, _): return "Every \(period.value) years"
+            @unknown default: return "Auto-renewing"
+            }
+        }
+        return "Auto-renewing"
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section(header: Text("Subscription Details")) {
+                    HStack {
+                        Text("Title")
+                        Spacer()
+                        Text(title).foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("Length")
+                        Spacer()
+                        Text(periodDescription).foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("Price")
+                        Spacer()
+                        Text(priceString).foregroundStyle(.secondary)
+                    }
+                }
+
+                Section(header: Text("Legal")) {
+                    Link("Privacy Policy", destination: URL(string: "https://eric1207cvb.github.io/hsuehyian-pages/")!)
+                    Link("Terms of Use (EULA)", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                }
+
+                Section(footer: Text("Payment will be charged to your Apple ID account at the confirmation of purchase. Subscription automatically renews unless it is canceled at least 24 hours before the end of the current period. You can manage and cancel your subscriptions in your App Store account settings after purchase.")) {
+                    EmptyView()
+                }
+            }
+            .navigationTitle("Subscription Info")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
 }
 

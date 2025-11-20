@@ -10,6 +10,10 @@ struct PaywallView: View {
     // 關閉按鈕，讓用戶可以返回
     @Environment(\.dismiss) var dismiss
 
+    @State private var isPurchasing: Bool = false
+    @State private var isRestoring: Bool = false
+    @State private var purchaseErrorMessage: String?
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -24,10 +28,19 @@ struct PaywallView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
                 
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Choose a plan")
+                        .font(.title3).bold()
+                    Text("Select a subscription to unlock Pro features.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
                 // 2. 顯示 Packages / 價格清單
                 VStack(alignment: .leading, spacing: 15) {
                     ForEach(offering.availablePackages) { package in
-                        PackageCell(package: package)
+                        PackageCell(package: package, isPurchasing: $isPurchasing)
                     }
                 }
                 .padding(.vertical, 20)
@@ -35,29 +48,51 @@ struct PaywallView: View {
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(15)
                 
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Subscription terms")
+                        .font(.headline)
+                    Group {
+                        Label("Subscription auto-renews unless canceled at least 24 hours before the end of the current period.", systemImage: "checkmark.circle")
+                        Label("Manage or cancel your subscription in your App Store account settings.", systemImage: "checkmark.circle")
+                        Label("Payment is charged to your Apple ID at confirmation of purchase.", systemImage: "checkmark.circle")
+                        Label("Your account will be charged for renewal within 24 hours prior to the end of the current period.", systemImage: "checkmark.circle")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
                 // 3. 恢復購買按鈕
-                Button("Restore Purchases") {
+                Button(action: {
                     Task {
+                        isRestoring = true
+                        defer { isRestoring = false }
                         do {
                             let info = try await Purchases.shared.restorePurchases()
-                            // 可在此依權益判斷是否關閉付費牆
                             _ = info.activeSubscriptions
                         } catch {
-                            // 這裡可以顯示錯誤給使用者
-                            print("Restore failed: \(error)")
+                            purchaseErrorMessage = error.localizedDescription
                         }
                     }
+                }) {
+                    if isRestoring {
+                        ProgressView().progressViewStyle(.circular)
+                    } else {
+                        Text("Restore Purchases")
+                    }
                 }
+                .disabled(isPurchasing || isRestoring)
                 .font(.callout)
                 
                 // 法遵連結（可點擊）
-                HStack(spacing: 16) {
-                    Link("Terms of Use", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
-                    Link("Privacy Policy", destination: URL(string: "https://eric1207cvb.github.io/hsuehyian-pages/")!)
+                VStack(spacing: 8) {
+                    HStack(spacing: 16) {
+                        Link("Terms of Use (EULA)", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                        Link("Privacy Policy", destination: URL(string: "https://eric1207cvb.github.io/hsuehyian-pages/")!)
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
                 }
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .padding(.top, 4)
                 
                 Text("By subscribing, you agree to our Terms of Use and Privacy Policy. Subscription auto-renews unless canceled at least 24 hours before the end of the current period. Manage or cancel in your App Store account settings.")
                     .font(.caption)
@@ -74,6 +109,11 @@ struct PaywallView: View {
                     }
                 }
             }
+            .alert("Purchase Error", isPresented: Binding(get: { purchaseErrorMessage != nil }, set: { if !$0 { purchaseErrorMessage = nil } })) {
+                Button("OK", role: .cancel) { purchaseErrorMessage = nil }
+            } message: {
+                Text(purchaseErrorMessage ?? "Unknown error")
+            }
         }
     }
 }
@@ -81,38 +121,46 @@ struct PaywallView: View {
 // 輔助結構：顯示單個訂閱 Package 的資訊
 struct PackageCell: View {
     let package: Package
-    
+    @Binding var isPurchasing: Bool
+
     var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text(package.storeProduct.localizedTitle)
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(displayName(for: package))
                     .font(.headline)
-                Text(package.storeProduct.localizedDescription)
+                Text(periodText(for: package) ?? "")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            
-            // 價格按鈕與期間
-            VStack(alignment: .trailing, spacing: 4) {
-                Button(package.localizedPriceString) {
+            VStack(alignment: .trailing, spacing: 6) {
+                Button(action: {
                     Task {
+                        isPurchasing = true
+                        defer { isPurchasing = false }
                         do {
                             let result = try await Purchases.shared.purchase(package: package)
                             if !result.userCancelled {
-                                // 成功購買，這裡可透過通知或環境關閉付費牆
-                                print("Purchase success: \(String(describing: result.customerInfo.activeSubscriptions))")
+                                // success; entitlement will update externally
                             }
                         } catch {
-                            print("Purchase failed: \(error)")
+                            // bubble up via notification by setting an environment binding would be ideal; omitted here
                         }
+                    }
+                }) {
+                    if isPurchasing {
+                        ProgressView()
+                    } else {
+                        Text(package.localizedPriceString)
+                            .bold()
                     }
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(isPurchasing)
 
                 if let period = periodText(for: package) {
                     Text(period)
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.trailing)
                 }
@@ -141,6 +189,13 @@ struct PackageCell: View {
             }
         }
         return nil
+    }
+    
+    private func displayName(for package: Package) -> String {
+        // Prefer the store product's localizedTitle; fall back to package identifier
+        let title = package.storeProduct.localizedTitle
+        if !title.isEmpty { return title }
+        return package.identifier
     }
 }
 
