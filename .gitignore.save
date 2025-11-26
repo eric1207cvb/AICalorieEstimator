@@ -1,0 +1,50 @@
+# macOS
+.DS_Store
+.localized
+
+# Xcode user-specific
+*.xcuserdatad
+*.xcuserstate
+xcuserdata/
+UserInterfaceState.xcuserstate
+
+# Xcode project/workspace generated
+DerivedData/
+build/
+*.xccheckout
+*.moved-aside
+*.xcscmblueprint
+
+# If you DO NOT use CocoaPods workspace, you can ignore all .xcworkspace
+# 但如果你用 CocoaPods，請不要忽略 .xcworkspace
+# *.xcworkspace
+
+# Swift Package Manager
+.build/
+# 如果你想鎖定依賴版本，請不要忽略 Package.resolved；否則就忽略它
+# Package.resolved
+
+# Swift Packages (本地 Packages/ 目錄通常是你自己的套件原始碼，建議不要忽略)
+# Packages/
+
+# CocoaPods (如果你使用 Pods，建議忽略整個 Pods 目錄與 .xcworkspace)
+Pods/
+*.xcworkspace
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Archives & products
+*.ipa
+*.xcarchive
+
+# Editors
+*.swp
+*.lock
+*.orig

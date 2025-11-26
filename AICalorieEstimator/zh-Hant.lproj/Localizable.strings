@@ -1,0 +1,30 @@
+/* 應用程式主標題 */
+"app.title" = "AI 熱量估算";
+
+/* 按鈕文字 */
+"button.take_photo" = "拍照估算";
+"button.select_album" = "從相簿選取";
+"button.health_check" = "測試連線";
+
+/* 介面標籤 */
+"label.analysis_result" = "分析結果";
+"label.subscription_status" = "訂閱狀態";
+
+/* 初始與載入提示 */
+"hint.initial" = "請點擊「拍照估算」或「從相簿選取」以開始分析。";
+"hint.loading_upload" = "正在上傳影像並準備分析...";
+"hint.loading_ai" = "AI 正在進行智慧分析，請稍候...";
+
+/* 結果區塊標題 */
+"result.total_calories" = "估算總熱量";
+"result.items_found" = "偵測到的食物項目";
+"result.ai_analysis" = "AI 分析與推理";
+
+/* 錯誤與狀態訊息 */
+"health_check.success" = "✅ 伺服器連線成功！";
+"health_check.fail" = "❌ 伺服器連線失敗：%@";
+
+"error.timeout" = "網路連線超時，請檢查伺服器狀態。";
+"error.no_connection" = "無法連接伺服器，請檢查網路連線。";
+"error.json_decode" = "資料解析錯誤，請重試。";
+"error.pro_required" = "您需要升級至 Pro 專業版，才能使用 AI 分析功能。";

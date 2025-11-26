@@ -1,0 +1,29 @@
+/* App Title */
+"app.title" = "AI カロリー推定";
+
+/* Button Texts */
+"button.take_photo" = "写真を撮る";
+"button.select_album" = "アルバムから選択";
+"button.health_check" = "接続テスト";
+
+/* Interface Labels */
+"label.analysis_result" = "分析結果";
+"label.subscription_status" = "購読ステータス";
+
+/* Initial and Loading Hints */
+"hint.initial" = "分析を開始するには、「写真を撮る」または「アルバムから選択」をタップしてください。";
+"hint.loading_upload" = "画像をアップロードし、分析を準備中...";
+"hint.loading_ai" = "AI分析中です、お待ちください...";
+
+/* Results */
+"health_check.success" = "✅ サーバー接続に成功しました！";
+"health_check.fail" = "❌ サーバー接続に失敗しました: %@";
+"result.total_calories" = "推定総カロリー";
+"result.items_found" = "検出された食品項目";
+"result.ai_analysis" = "AI分析と推論";
+
+/* Errors and Status */
+"error.timeout" = "ネットワーク接続がタイムアウトしました。サーバー状態を確認してください。";
+"error.no_connection" = "サーバーに接続できません。ネットワーク接続を確認してください。";
+"error.json_decode" = "データ解析エラーです。再試行してください。";
+"error.pro_required" = "AI分析機能をご利用いただくには、Proプレミアムへのアップグレードが必要です。";

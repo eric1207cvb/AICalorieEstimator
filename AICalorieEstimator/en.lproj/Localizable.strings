@@ -1,0 +1,29 @@
+/* App Title */
+"app.title" = "AI Calorie Estimator";
+
+/* Button Texts */
+"button.take_photo" = "Take Photo";
+"button.select_album" = "Select from Album";
+"button.health_check" = "Test Connection";
+
+/* Interface Labels */
+"label.analysis_result" = "Analysis Result";
+"label.subscription_status" = "Subscription Status";
+
+/* Initial and Loading Hints */
+"hint.initial" = "Tap 'Take Photo' or 'Select from Album' to start analysis.";
+"hint.loading_upload" = "Uploading image and preparing analysis...";
+"hint.loading_ai" = "AI Analysis in progress, please wait...";
+
+/* Results */
+"result.total_calories" = "Estimated Total Calories";
+"result.items_found" = "Detected Food Items";
+"result.ai_analysis" = "AI Analysis and Reasoning";
+
+/* Errors and Status */
+"health_check.success" = "✅ Server Connection Successful!";
+"health_check.fail" = "❌ Server Connection Failed: %@";
+"error.timeout" = "Network connection timed out. Please check server status.";
+"error.no_connection" = "Cannot connect to server. Please check your network connection.";
+"error.json_decode" = "Data parsing error. Please retry.";
+"error.pro_required" = "You need to upgrade to Pro to use the AI analysis feature.";
