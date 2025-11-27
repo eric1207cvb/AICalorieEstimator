@@ -128,7 +128,8 @@ struct ContentView: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Button("Restore Purchases") {
+
+                            Button {
                                 Purchases.shared.restorePurchases { customerInfo, error in
                                     if let error = error {
                                         print("Restore failed: \(error.localizedDescription)")
@@ -136,35 +137,32 @@ struct ContentView: View {
                                         print("Restore succeeded: \(String(describing: customerInfo))")
                                     }
                                 }
+                            } label: {
+                                Label("Restore", systemImage: "arrow.clockwise.circle")
+                                    .labelStyle(.titleAndIcon)
+                                    .font(.subheadline)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.9)
+                                    .fixedSize(horizontal: true, vertical: false)
                             }
-                            .buttonStyle(.bordered)
+                            .buttonStyle(.borderedProminent)
+                            .tint(.blue)
+                            .controlSize(.regular)
 
-                            Button("Manage") { showManageSubscriptions = true }
-                                .buttonStyle(.bordered)
-                        }
-
-                        Button {
-                            isShowingSubscriptionInfo = true
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "doc.text.magnifyingglass")
-                                Text("Subscription Terms & Info")
-                                Spacer()
-                                Image(systemName: "chevron.right").font(.footnote)
+                            Button {
+                                showManageSubscriptions = true
+                            } label: {
+                                Label("Manage", systemImage: "gearshape")
+                                    .labelStyle(.titleAndIcon)
+                                    .font(.subheadline)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.9)
+                                    .fixedSize(horizontal: true, vertical: false)
                             }
-                            .font(.footnote)
-                            .padding(12)
-                            .background(Color.gray.opacity(0.12))
-                            .cornerRadius(10)
+                            .buttonStyle(.borderedProminent)
+                            .tint(.blue)
+                            .controlSize(.regular)
                         }
-                        .buttonStyle(.plain)
-                        .sheet(isPresented: $isShowingSubscriptionInfo) {
-                            SubscriptionInfoView(offerings: offerings)
-                        }
-                        // Disclaimer button placed below Subscription Terms & Info
-                        DisclaimerButton(renderAsCard: true)
-                            .buttonStyle(.plain)
-                            .padding(.top, 6)
                     }
                     .padding(14)
                     .background(Color.gray.opacity(0.08))
@@ -294,7 +292,8 @@ struct ContentView: View {
                     // --- 結果顯示區 (v5 骨架屏) ---
                     VStack(alignment: .leading) {
                         Text(LocalizedStringKey("label.analysis_result"))
-                            .font(.headline).padding(.bottom, 5)
+                            .font(.headline)
+                            .padding(.bottom, 5)
                         
                         VStack {
                             switch viewState {
@@ -321,6 +320,33 @@ struct ContentView: View {
                     }
                     .padding(.horizontal)
                     
+                    // Moved Data Sources button to the bottom for better visibility
+                    DataSourcesButton()
+                        .padding(.horizontal)
+                    
+                    VStack(spacing: 8) {
+                        Button {
+                            isShowingSubscriptionInfo = true
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "doc.text.magnifyingglass")
+                                Text("Subscription Terms & Info")
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.footnote)
+                            }
+                            .font(.footnote)
+                            .foregroundStyle(.white)
+                            .padding(12)
+                            .background(Color.gray.opacity(0.12))
+                            .cornerRadius(10)
+                        }
+                        .buttonStyle(.plain)
+
+                        DisclaimerButton(renderAsCard: true)
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom)
                 }
                 .padding(.top, 1) // (讓 ScrollView 頂部貼齊)
             }
@@ -358,6 +384,9 @@ struct ContentView: View {
                 .padding()
                 .onAppear { fetchOfferings() }
             }
+        }
+        .sheet(isPresented: $isShowingSubscriptionInfo) {
+            SubscriptionInfoView(offerings: offerings)
         }
         .onDisappear {
             // Refresh CustomerInfo when paywall closes

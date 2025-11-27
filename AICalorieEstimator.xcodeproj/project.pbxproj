@@ -18,6 +18,7 @@
 		4C8FC2572ED0DD7E00A5A287 /* README-ja.md in Resources */ = {isa = PBXBuildFile; fileRef = 4C8FC2562ED0DD7E00A5A287 /* README-ja.md */; };
 		4C8FC2592ED0DE3A00A5A287 /* README-zh-Hant.md in Resources */ = {isa = PBXBuildFile; fileRef = 4C8FC2582ED0DE3A00A5A287 /* README-zh-Hant.md */; };
 		4CB66FE32ED6996F00CA4BDC /* DisclaimerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB66FE22ED6996F00CA4BDC /* DisclaimerButton.swift */; };
+		4CB6700D2ED7F77F00CA4BDC /* DataSourcesButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB6700C2ED7F77F00CA4BDC /* DataSourcesButton.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,6 +51,7 @@
 		4C8FC2562ED0DD7E00A5A287 /* README-ja.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "README-ja.md"; sourceTree = "<group>"; };
 		4C8FC2582ED0DE3A00A5A287 /* README-zh-Hant.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "README-zh-Hant.md"; sourceTree = "<group>"; };
 		4CB66FE22ED6996F00CA4BDC /* DisclaimerButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisclaimerButton.swift; sourceTree = "<group>"; };
+		4CB6700C2ED7F77F00CA4BDC /* DataSourcesButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourcesButton.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -134,6 +136,7 @@
 				4C8FC2582ED0DE3A00A5A287 /* README-zh-Hant.md */,
 				4C7D41722ED5985800AD7AC7 /* Color+Brand.swift */,
 				4CB66FE22ED6996F00CA4BDC /* DisclaimerButton.swift */,
+				4CB6700C2ED7F77F00CA4BDC /* DataSourcesButton.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -304,6 +307,7 @@
 				4C5BCAFC2EC80F500046E6EE /* PaywallView.swift in Sources */,
 				4C5BCAEC2EC6DC890046E6EE /* SkeletonView.swift in Sources */,
 				4CB66FE32ED6996F00CA4BDC /* DisclaimerButton.swift in Sources */,
+				4CB6700D2ED7F77F00CA4BDC /* DataSourcesButton.swift in Sources */,
 				4C5BCAEA2EC6DC360046E6EE /* Shimmer.swift in Sources */,
 				4C7D41732ED5985800AD7AC7 /* Color+Brand.swift in Sources */,
 				4C8D7F6E2EC580DA00B42753 /* CameraPickerView.swift in Sources */,

@@ -4,4 +4,10 @@
    <FileRef
       location = "self:">
    </FileRef>
+   <FileRef
+      location = "group:CitationsView.swift">
+   </FileRef>
+   <FileRef
+      location = "group:DisclaimerButton.swift">
+   </FileRef>
 </Workspace>
