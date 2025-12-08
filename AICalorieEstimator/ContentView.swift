@@ -5,7 +5,7 @@ import RevenueCat // 導入 RevenueCat SDK
 import StoreKit
 import AVFoundation
 
-// --- 0. Helper & Extension (修正編譯順序) ---
+// --- 0. Helper & Extension ---
 extension String {
     var localized: String {
         return NSLocalizedString(self, comment: "")
@@ -24,7 +24,7 @@ enum API {
     #endif
 }
 
-// --- 2. 資料結構 (v8) ---
+// --- 2. 資料結構 ---
 struct RequestPayload: Codable {
     let image: String
     let language: String
@@ -59,12 +59,11 @@ enum ViewState: Equatable {
 // --- 6. ContentView 主畫面 ---
 struct ContentView: View {
     
-    // 接收來自 App.swift 的語言狀態 (Binding)
     @Binding var selectedLanguage: AppLanguage
     
     init(viewState: ViewState = .empty, selectedLanguage: Binding<AppLanguage>) {
         self._viewState = State(initialValue: viewState)
-        self._selectedLanguage = selectedLanguage // 綁定語言
+        self._selectedLanguage = selectedLanguage
     }
     
     @State private var selectedImage: Image? = nil
@@ -73,26 +72,64 @@ struct ContentView: View {
     @State private var isShowingCamera = false
     @State private var viewState: ViewState = .empty
     
-    // 新增 camera unavailable alert 狀態
     @State private var cameraUnavailableAlert: Bool = false
     
-    // 【!!! V9 升級：新增 RevenueCat 狀態變數 !!!】
+    // RevenueCat 狀態變數
     @State private var offerings: Offerings?
     @State private var rcStatusMessage: String = "正在檢查訂閱狀態..."
-    @State private var isProUser: Bool = false // V9.1 最終判斷權限
-    @State private var isShowingPaywall: Bool = false // V12 升級：控制 Paywall 顯示
+    @State private var isProUser: Bool = false
+    @State private var isShowingPaywall: Bool = false
     
-    // 新增 RevenueCat 顯示錯誤 Alert 狀態
     @State private var showRCAlert: Bool = false
     
     #if DEBUG
-    @State private var debugBypassPro: Bool = true
+    // 【修復 1】預設改為 false，防止切換語言重置畫面時，自動開啟開發者後門
+    @State private var debugBypassPro: Bool = false
     #endif
     
     @State private var showManageSubscriptions: Bool = false
-    @State private var isShowingSubscriptionInfo: Bool = false // 新增訂閱資訊 sheet 狀態
+    @State private var isShowingSubscriptionInfo: Bool = false
     
-    // 新增相機授權檢查函式
+    // 【5次免費額度邏輯】
+    let maxFreeUsageCount = 5
+    let usageKey = "user_free_usage_count_v1"
+    
+    // 取得目前已使用次數
+    func getCurrentUsageCount() -> Int {
+        return UserDefaults.standard.integer(forKey: usageKey)
+    }
+    
+    // 增加使用次數 (消耗一點)
+    func incrementUsageCount() {
+        let current = getCurrentUsageCount()
+        UserDefaults.standard.set(current + 1, forKey: usageKey)
+        // 更新狀態文字
+        updateStatusMessage()
+    }
+    
+    // 檢查是否還有剩餘次數
+    func hasRemainingFreeUsage() -> Bool {
+        return getCurrentUsageCount() < maxFreeUsageCount
+    }
+    
+    // 【修復 2】集中管理狀態文字邏輯
+    // 確保無論是 App 啟動、網路回應或切換語言，顯示的邏輯都是一致的
+    func updateStatusMessage() {
+        if isProUser {
+            self.rcStatusMessage = "會員狀態：專業版 (Pro) 已解鎖！"
+        } else {
+            let used = getCurrentUsageCount()
+            let remaining = max(0, maxFreeUsageCount - used)
+            
+            if remaining > 0 {
+                self.rcStatusMessage = "免費試用剩餘次數：\(remaining) 次"
+            } else {
+                self.rcStatusMessage = "免費額度已用完。請升級以繼續使用。"
+            }
+        }
+    }
+    
+    // 相機授權檢查
     func ensureCameraAuthorized() async -> Bool {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         switch status {
@@ -107,12 +144,11 @@ struct ContentView: View {
     }
     
     var body: some View {
-        // 【!!! v8.2 升級：加入 "導覽列" !!!】
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
                     
-                    // 訂閱區塊（卡片樣式）
+                    // 訂閱區塊
                     VStack(alignment: .leading, spacing: 12) {
                         SubscriptionStatusView(
                             offerings: $offerings,
@@ -135,6 +171,11 @@ struct ContentView: View {
                                         print("Restore failed: \(error.localizedDescription)")
                                     } else {
                                         print("Restore succeeded: \(String(describing: customerInfo))")
+                                        // 恢復購買後也要更新狀態
+                                        if let info = customerInfo {
+                                            self.isProUser = info.entitlements.active.keys.contains("pro")
+                                            self.updateStatusMessage()
+                                        }
                                     }
                                 }
                             } label: {
@@ -193,7 +234,7 @@ struct ContentView: View {
                     .padding(.horizontal)
                     #endif
                     
-                    // (圖片顯示區 - 加入提示文字)
+                    // 圖片顯示區
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(Color.gray, lineWidth: 2)
@@ -214,9 +255,9 @@ struct ContentView: View {
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.top, 10) // (因為標題移到 "上面" 了，給它一點空間)
+                    .padding(.top, 10)
                     
-                    // --- 按鈕區 (v8) ---
+                    // 按鈕區
                     HStack(spacing: 15) {
                         Button(action: {
                             Task {
@@ -253,14 +294,14 @@ struct ContentView: View {
                     }
                     .padding(.horizontal)
                     
-                    // --- .sheet & onChange (v4) ---
+                    // .sheet & onChange
                     .sheet(isPresented: $isShowingCamera) {
                         CameraPickerView(selectedImage: $selectedUIImage)
                     }
                     .onChange(of: photosPickerItem) { _, newValue in
                         Task {
                             if let data = try? await newValue?.loadTransferable(type: Data.self),
-                                let uiImage = UIImage(data: data) {
+                               let uiImage = UIImage(data: data) {
                                 self.selectedUIImage = uiImage
                             }
                         }
@@ -268,7 +309,6 @@ struct ContentView: View {
                     .onChange(of: selectedUIImage) { _, newImage in
                         if let uiImage = newImage {
                             self.selectedImage = Image(uiImage: uiImage)
-                            // V9 升級：這裡處理圖片切換，並觸發分析
                             Task { await analyzeImage(uiImage: uiImage) }
                         } else {
                             self.selectedImage = nil
@@ -279,7 +319,10 @@ struct ContentView: View {
                         if newValue == false { // Paywall closed
                             Purchases.shared.getCustomerInfo { info, _ in
                                 let isPro = info?.entitlements.active.keys.contains("pro") ?? false
-                                DispatchQueue.main.async { self.isProUser = isPro }
+                                DispatchQueue.main.async {
+                                    self.isProUser = isPro
+                                    self.updateStatusMessage()
+                                }
                             }
                         }
                     }
@@ -289,7 +332,7 @@ struct ContentView: View {
                         Text("此裝置無相機或未授權使用相機，請改用相簿選取照片。")
                     }
                     
-                    // --- 結果顯示區 (v5 骨架屏) ---
+                    // 結果顯示區
                     VStack(alignment: .leading) {
                         Text(LocalizedStringKey("label.analysis_result"))
                             .font(.headline)
@@ -320,7 +363,6 @@ struct ContentView: View {
                     }
                     .padding(.horizontal)
                     
-                    // Moved Data Sources button to the bottom for better visibility
                     DataSourcesButton()
                         .padding(.horizontal)
                     
@@ -348,27 +390,31 @@ struct ContentView: View {
                     .padding(.horizontal)
                     .padding(.bottom)
                 }
-                .padding(.top, 1) // (讓 ScrollView 頂部貼齊)
+                .padding(.top, 1)
             }
-            // --- 【!!! v8.2 升級：標題 & 工具列按鈕 !!!】---
             .navigationTitle(LocalizedStringKey("app.title"))
             .navigationBarTitleDisplayMode(.large)
-            // 【!!! V12 最終修正：移除 Toolbar 避免 Bug 衝突 !!!】
         }
-        .id(selectedLanguage)
-        // Environment 和 ID 綁定已移至 App.swift
+        .id(selectedLanguage) // 注意：這個 id 會導致切換語言時 View 重建，所以 updateStatusMessage 必須在 onAppear 執行
         .onAppear {
+            // 【修復 3】畫面一出現（或重建）就立刻檢查本地次數
+            // 這樣即使網路還沒回來，用戶也會立刻看到「額度已用完」
+            updateStatusMessage()
             fetchOfferings()
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("proStatusUpdated"))) { output in
             if let isPro = output.object as? Bool {
                 self.isProUser = isPro
+                self.updateStatusMessage()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             Purchases.shared.getCustomerInfo { info, _ in
                 let isPro = info?.entitlements.active.keys.contains("pro") ?? false
-                DispatchQueue.main.async { self.isProUser = isPro }
+                DispatchQueue.main.async {
+                    self.isProUser = isPro
+                    self.updateStatusMessage()
+                }
             }
         }
         .sheet(isPresented: $isShowingPaywall) {
@@ -389,11 +435,11 @@ struct ContentView: View {
             SubscriptionInfoView(offerings: offerings)
         }
         .onDisappear {
-            // Refresh CustomerInfo when paywall closes
             Purchases.shared.getCustomerInfo { info, _ in
                 let isPro = info?.entitlements.active.keys.contains("pro") ?? false
                 DispatchQueue.main.async {
                     self.isProUser = isPro
+                    self.updateStatusMessage()
                 }
             }
         }
@@ -405,21 +451,38 @@ struct ContentView: View {
         }
     }
     
-    // --- (analyzeImage 函式 - V11 實作鎖定) ---
+    // --- (analyzeImage 函式) ---
     func analyzeImage(uiImage: UIImage) async {
-        // 【!!! V9 升級：專業版鎖定檢查 (支援 DEBUG 繞過) !!!】
+        
         #if DEBUG
         let shouldBypass = debugBypassPro
         #else
         let shouldBypass = false
         #endif
-        if !isProUser && !shouldBypass {
-            // 如果不是 Pro 用戶，顯示鎖定錯誤，並跳出
-            self.viewState = .error("error.pro_required".localized)
+        
+        // 1. Pro 用戶 -> 通過
+        if isProUser {
+            // Pass
+        }
+        // 2. 開發者模式 -> 通過
+        else if shouldBypass {
+            // Pass
+        }
+        // 3. 檢查剩餘次數
+        else if hasRemainingFreeUsage() {
+            incrementUsageCount() // 消耗一次額度
+            print("🟢 免費額度消耗中。已使用 \(getCurrentUsageCount()) / \(maxFreeUsageCount)")
+        }
+        // 4. 次數已用完 -> 阻擋
+        else {
+            print("🔴 免費額度已用完 (5/5)，觸發 Paywall。")
+            self.viewState = .empty
+            self.updateStatusMessage() // 強制 UI 更新
+            self.isShowingPaywall = true
             return
         }
-        // 【!!! 如果是 Pro 用戶，才執行原本的分析邏輯 !!!】
         
+        // --- AI 分析邏輯 ---
         self.viewState = .loading("hint.loading_upload".localized)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.viewState = .loading("hint.loading_ai".localized)
@@ -430,17 +493,15 @@ struct ContentView: View {
                 language: selectedLanguage.rawValue
             )
             self.viewState = .success(responseData)
-            // 觸覺回饋：分析成功
             playHaptic(.success)
         } catch {
             let userMessage = decodeError(error)
             self.viewState = .error(userMessage)
-            // 觸覺回饋：分析失敗
             playHaptic(.error)
         }
     }
 
-    // --- (fetchCaloriesFromImage 函式 保持不變) ---
+    // --- (fetchCaloriesFromImage 保持不變) ---
     func fetchCaloriesFromImage(for image: UIImage, language: String) async throws -> CloudResponsePayload {
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             throw CalorieEstimatorError.imageConversionFailed
@@ -450,13 +511,12 @@ struct ContentView: View {
         guard let encodedPayload = try? JSONEncoder().encode(payload) else {
             throw CalorieEstimatorError.jsonEncodingFailed
         }
-        // 修改 URL 建構方式，不使用相對路徑字串
         let url = API.baseURL.appendingPathComponent("estimate-calories")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = encodedPayload
-        request.timeoutInterval = 90 // (保持 90 秒)
+        request.timeoutInterval = 90
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
@@ -470,7 +530,7 @@ struct ContentView: View {
         }
     }
     
-    // --- (healthCheck 函式 保持不變 - 修正了 requestBody 錯誤) ---
+    // --- (healthCheck 保持不變) ---
     func healthCheck() async {
         self.viewState = .loading("hint.loading_ai".localized)
         do {
@@ -497,7 +557,7 @@ struct ContentView: View {
         }
     }
     
-    // --- (decodeError 函式 保持不變) ---
+    // --- (decodeError 保持不變) ---
     func decodeError(_ error: Error) -> String {
         if let err = error as? URLError {
             switch err.code {
@@ -523,38 +583,27 @@ struct ContentView: View {
         #endif
     }
     
-    // 【!!! V9 升級：新增 RevenueCat 函數 - 最終版 !!!】
+    // --- 【修復 4】RevenueCat Fetch Offerings (邏輯優化) ---
     func fetchOfferings() {
         Purchases.shared.getOfferings { (offerings, error) in
-            // 處理 Offerings 錯誤 (如果 Product Catalog 是空的，會在這裡報錯)
             if let error = error {
                 print("RevenueCat Error: \(error.localizedDescription)")
                 DispatchQueue.main.async {
-                    self.rcStatusMessage = "無法連接訂閱服務。請檢查網路或 App Store 狀態。"
+                    // 這裡不直接設字串，而是看還有沒有次數
+                    self.updateStatusMessage()
                 }
-                // 即使 Offerings 失敗，也要繼續檢查用戶狀態
             }
 
-            // 檢查 CustomerInfo (會員狀態)
             Purchases.shared.getCustomerInfo { (customerInfo, error) in
-                // 檢查用戶是否有我們在 RevenueCat 設定的 "pro" 會員資格
                 let isPro = customerInfo?.entitlements.active.keys.contains("pro") ?? false
                 
-                // 成功取得，更新狀態
                 DispatchQueue.main.async {
                     self.offerings = offerings
-                    self.isProUser = isPro // V9.1 関鍵：更新會員狀態
-                    
-                    if isPro {
-                        self.rcStatusMessage = "會員狀態：專業版 (Pro) 已解鎖！"
-                        print("✅ 用戶是專業版會員！")
-                    } else if offerings?.current != nil { // 檢查是否有至少一個 Offering
-                         // Offerings 載入成功，但用戶不是 Pro
-                        self.rcStatusMessage = "連線成功。請點擊購買按鈕解鎖專業版。"
-                    } else {
-                        // 初始 Offerings 失敗 (Product Catalog is empty)
-                         self.rcStatusMessage = "產品目錄未載入。請檢查 RevenueCat 設定。"
-                    }
+                    self.isProUser = isPro
+                    // 【關鍵修正】不要直接覆蓋字串，而是重新呼叫 updateStatusMessage
+                    // 這樣它會檢查：如果不是 Pro，且次數用完，會保持顯示「額度已用完」
+                    // 而不是顯示「連線成功」讓人誤會
+                    self.updateStatusMessage()
                 }
             }
         }
@@ -565,8 +614,8 @@ struct ContentView: View {
 struct SubscriptionStatusView: View {
     @Binding var offerings: Offerings?
     @Binding var statusMessage: String
-    @Binding var isProUser: Bool // 接收會員狀態
-    @Binding var isShowingPaywall: Bool // 【V12 升級：控制 Paywall 狀態】
+    @Binding var isProUser: Bool
+    @Binding var isShowingPaywall: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -585,9 +634,10 @@ struct SubscriptionStatusView: View {
                         .fontWeight(.semibold)
                 } else {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("❌ \(statusMessage)")
+                        Text(statusMessage) // 直接顯示 Content View 傳來的動態訊息 (含次數)
                             .font(.footnote)
                             .foregroundColor(.red)
+                        
                         Button("立即解鎖 Pro 功能") {
                             self.isShowingPaywall = true
                         }
@@ -610,7 +660,7 @@ struct SubscriptionStatusView: View {
 }
 
 
-// --- 7. 拆分出來的「子畫面」 (View Components) ---
+// --- 7. 拆分出來的「子畫面」 ---
 // (保持不變)
 
 struct InitialHintView: View {
@@ -635,7 +685,6 @@ struct ErrorView: View {
     }
 }
 
-// (ResultView v8 版) -> Modified per instructions
 struct ResultView: View {
     let data: CloudResponsePayload
     let language: AppLanguage
@@ -668,37 +717,25 @@ struct ResultView: View {
     }
 }
 
-// --- (Preview 保持不變) ---
-#Preview("預覽 - 成功狀態 (v7)") {
-    // (包在 NavigationStack 裡，才能預覽 "標題")
+#Preview("預覽 - 成功狀態") {
     NavigationStack {
         ContentView(viewState: .success(
             CloudResponsePayload(
                 foodList: "1 x Coca-Cola (330ml)",
                 totalCaloriesMin: 140,
                 totalCaloriesMax: 140,
-                reasoning: "Based on the image, this is one 330ml can of Coca-Cola, which is approx 140 calories."
+                reasoning: "Based on the image, this is one 330ml can of Coca-Cola."
             )
-        ), selectedLanguage: .constant(.traditionalChinese)) // 修正預覽
+        ), selectedLanguage: .constant(.traditionalChinese))
         .environment(\.locale, Locale(identifier: "en"))
     }
 }
-#Preview("預覽 - 骨架屏 (v5)") {
-    // (包在 NavigationStack 裡)
+#Preview("預覽 - 骨架屏") {
     NavigationStack {
-        ContentView(viewState: .loading("hint.loading_ai"), selectedLanguage: .constant(.traditionalChinese)) // 修正預覽
+        ContentView(viewState: .loading("hint.loading_ai"), selectedLanguage: .constant(.traditionalChinese))
     }
 }
 
-
-// MARK: - Calorie Display Formatter
-
-/// Formats an estimated calories range and applies locale-specific unit normalization.
-/// - Parameters:
-///   - min: Lower bound value (inclusive).
-///   - max: Upper bound value (inclusive).
-///   - language: Current app language controlling unit output.
-/// - Returns: A string like "30 - 50 大卡" (ZH-TW), "30 - 50 kcal" (EN), or "30 - 50 キロカロリー" (JA).
 func formatEstimatedCalories(min: Int, max: Int, language: AppLanguage) -> String {
     let unit: String
     switch language {
@@ -712,15 +749,12 @@ func formatEstimatedCalories(min: Int, max: Int, language: AppLanguage) -> Strin
     return "\(min) - \(max) \(unit)"
 }
 
-
-// MARK: - Subscription Info View (for App Review compliance)
+// MARK: - Subscription Info View
 struct SubscriptionInfoView: View {
     let offerings: Offerings?
 
-    // Helper to extract a representative package for display
     private var displayPackage: Package? {
         if let current = offerings?.current {
-            // prefer monthly if available
             if let monthly = current.availablePackages.first(where: { $0.packageType == .monthly }) {
                 return monthly
             }
@@ -729,7 +763,6 @@ struct SubscriptionInfoView: View {
         return nil
     }
 
-    // Derived properties
     private var title: String {
         if let pkg = displayPackage {
             return pkg.storeProduct.localizedTitle
@@ -796,4 +829,3 @@ struct SubscriptionInfoView: View {
         }
     }
 }
-
