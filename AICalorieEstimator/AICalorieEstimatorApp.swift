@@ -1,41 +1,39 @@
 import SwiftUI
 import RevenueCat
 
-// 【!!! 關鍵：AppLanguage 必須在這裡定義!!!】
-enum AppLanguage: String, CaseIterable, Identifiable {
-    case english = "en"
-    case traditionalChinese = "zh-Hant"
-    case japanese = "ja"
-    var id: String { self.rawValue }
-    var displayName: String {
-        switch self {
-        case .english: return "English"
-        case .traditionalChinese: return "繁體中文"
-        case .japanese: return "日本語"
-        }
-    }
-}
-
 @main
 struct AICalorieEstimatorApp: App {
-    // 1. 將 AppStorage 提升到 App 結構的根目錄
-    @AppStorage("selectedLanguage") private var selectedLanguage: AppLanguage = .traditionalChinese
+    // 1. 嘗試從 UserDefaults 讀取使用者上次「手動切換」的語言
+    @AppStorage("user_selected_language_v2") private var savedLanguageCode: String = ""
     
-    // 2. 在這裡貼上你的「公開 API 金鑰」
-    let REVENUECAT_API_KEY = "appl_jOygYGBHCEIfADYbuaAaxYQNdgE" // 請用你自己的金鑰替換
-
+    // 2. App 運行時的語言狀態
+    @State private var selectedLanguage: AppLanguage = .english
+    
     init() {
-        // [Init only required for Purchases config]
+        // 設定 RevenueCat API Key
         Purchases.logLevel = .debug
-        Purchases.configure(withAPIKey: REVENUECAT_API_KEY)
+        
+        // [Fix] 已填入您提供的正確 API Key，這將解決 401 錯誤
+        Purchases.configure(withAPIKey: "appl_jOygYGBHCEIfADYbuaAaxYQNdgE")
     }
-
+    
     var body: some Scene {
         WindowGroup {
-            // 將 selectedLanguage 透過 Binding 傳遞給 ContentView
             ContentView(selectedLanguage: $selectedLanguage)
-                // 3. 【關鍵修正】在最頂層注入環境變數，解決多語言切換 Bug
-                .environment(\.locale, .init(identifier: selectedLanguage.rawValue))
+                .onAppear {
+                    // 🚀 App 啟動時的語言決定邏輯
+                    if let saved = AppLanguage(rawValue: savedLanguageCode) {
+                        // A. 如果使用者之前有手動選過，就用他選的
+                        selectedLanguage = saved
+                    } else {
+                        // B. 如果是第一次打開 (或沒選過)，就自動偵測系統語言
+                        selectedLanguage = AppLanguage.systemPreferred
+                    }
+                }
+                .onChange(of: selectedLanguage) { _, newValue in
+                    // 當使用者在 App 內切換語言時，立刻存檔
+                    savedLanguageCode = newValue.rawValue
+                }
         }
     }
 }

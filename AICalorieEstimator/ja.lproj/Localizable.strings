@@ -27,3 +27,38 @@
 "error.no_connection" = "サーバーに接続できません。ネットワーク接続を確認してください。";
 "error.json_decode" = "データ解析エラーです。再試行してください。";
 "error.pro_required" = "AI分析機能をご利用いただくには、Proプレミアムへのアップグレードが必要です。";
+
+/* Result View New Keys */
+"result.calorie_estimate" = "カロリー推定";
+"result.nutrition_distribution" = "栄養素の内訳";
+"result.protein" = "タンパク質";
+"result.carbs" = "炭水化物";
+"result.fat" = "脂質";
+"result.ai_comment" = "AI アドバイス";
+"result.smart_analysis" = "スマート分析";
+"result.health_advice" = "健康のヒント";
+
+/* Subscription Status */
+"status.pro_active" = "ステータス：Pro版";
+"status.free_remaining %lld" = "無料トライアル残り：%lld 回";
+"status.free_exhausted" = "無料分を使い切りました。";
+"status.upgrade_pro" = "Proにアップグレード";
+"status.restore" = "購入を復元";
+"status.manage" = "管理";
+
+/* Server Status */
+"status.server.unknown" = "接続を確認";
+"status.server.checking" = "接続中...";
+"status.server.online" = "正常稼働中";
+"status.server.offline" = "サーバーオフライン";
+
+/* User Profile */
+"profile.title" = "個人ダイエット設定";
+"profile.height" = "身長 (cm)";
+"profile.weight" = "体重 (kg)";
+"profile.target" = "目標体重 (kg)";
+"profile.sync_health" = "Appleヘルスケア同期";
+"profile.summary_bmi" = "BMI: ";
+"profile.summary_target" = "目標: ";
+
+"profile.steps_today %lld" = "今日の歩数：%lld";

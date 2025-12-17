@@ -28,3 +28,64 @@
 "error.no_connection" = "無法連接伺服器，請檢查網路連線。";
 "error.json_decode" = "資料解析錯誤，請重試。";
 "error.pro_required" = "您需要升級至 Pro 專業版，才能使用 AI 分析功能。";
+
+/* Result View New Keys */
+"result.calorie_estimate" = "熱量估算";
+"result.nutrition_distribution" = "營養素分佈";
+"result.protein" = "蛋白質";
+"result.carbs" = "碳水";
+"result.fat" = "脂肪";
+"result.ai_comment" = "AI 飲食點評";
+"result.smart_analysis" = "智能分析";
+"result.health_advice" = "健康建議";
+
+/* 訂閱狀態 */
+"status.pro_active" = "會員狀態：專業版 (Pro) 已解鎖！";
+"status.free_remaining %lld" = "免費試用剩餘次數：%lld 次";
+"status.free_exhausted" = "免費額度已用完。請升級以繼續使用。";
+"status.upgrade_pro" = "升級 Pro 版";
+"status.restore" = "恢復購買";
+"status.manage" = "管理訂閱";
+
+/* 訂閱狀態 */
+"status.pro_active" = "會員狀態：專業版 (Pro) 已解鎖！";
+"status.free_remaining %lld" = "免費試用剩餘次數：%lld 次";
+"status.free_exhausted" = "免費額度已用完。請升級以繼續使用。";
+"status.upgrade_pro" = "升級 Pro 版";
+"status.restore" = "恢復購買";
+"status.manage" = "管理訂閱";
+
+/* Server Status */
+"status.server.unknown" = "點擊檢查連線";
+"status.server.checking" = "連線中...";
+"status.server.online" = "系統運作正常";
+"status.server.offline" = "伺服器離線";
+
+/* 個人檔案 */
+"profile.title" = "個人飲控設定";
+"profile.height" = "身高 (cm)";
+"profile.weight" = "體重 (kg)";
+"profile.target" = "目標體重 (kg)";
+"profile.sync_health" = "同步 Apple 健康數據";
+"profile.summary_bmi" = "BMI: ";
+"profile.summary_target" = "目標: ";
+
+/* Nutrition Advice */
+"advice.cal_high" = "⚠️ 熱量佔全日 %lld%%，建議下一餐清淡。";
+"advice.cal_low" = "🟢 熱量較低，適合當作點心。";
+"advice.cal_good" = "✅ 熱量適中，符合計畫！";
+
+"advice.high_protein" = "💪 蛋白質豐富！有助於肌肉修復與增加飽足感。";
+"advice.high_fat" = "💧 油脂比例較高，建議多補充水分或茶飲幫助代謝。";
+"advice.high_carb" = "⚡️ 碳水較高，建議飯後稍微走動，幫助血糖穩定。";
+
+"advice.micronutrient.veg" = "🥬 檢測到蔬菜：富含膳食纖維與鉀，有助於腸道健康與消水腫。";
+"advice.micronutrient.fruit" = "🍎 檢測到水果：補充維生素C與抗氧化劑的好時機。";
+"advice.micronutrient.seafood" = "🐟 檢測到海鮮：富含 Omega-3 與鋅，有助於抗發炎與免疫力。";
+"advice.micronutrient.meat" = "🥩 檢測到肉類：良好的鐵質與維生素 B12 來源，有助於造血與神經系統。";
+"advice.micronutrient.dairy" = "🥛 檢測到乳製品：補充鈣質與維生素 D，維持骨骼健康。";
+"advice.micronutrient.nuts" = "🥜 檢測到堅果：富含鎂與健康油脂，有助於放鬆神經。";
+
+"advice.bmi_watch" = "(小提醒：BMI 略高，建議控制精緻澱粉攝取。)";
+
+"profile.steps_today %lld" = "今日步數：%lld";

@@ -467,6 +467,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = AICalorieEstimator/AICalorieEstimator.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2RF44L5UDV;
@@ -476,7 +477,12 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AICalorieEstimator/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "我們需要您的相機權限，才能即時拍攝食物照片並為您分析熱量。";
+				INFOPLIST_KEY_LSApplicationCategoryType = "Privacy - Photo Library Usage Description";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to capture food photos for calorie analysis.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need access to your weight and steps to provide accurate recommendations.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need permission to write nutrition data to the Health App.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "We use your step count to calculate your Total Daily Energy Expenditure (TDEE).";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need photo library access to select food photos.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -491,7 +497,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.1;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = tw.yian.AICalorieEstimator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -514,6 +520,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = AICalorieEstimator/AICalorieEstimator.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2RF44L5UDV;
@@ -523,7 +530,12 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AICalorieEstimator/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "我們需要您的相機權限，才能即時拍攝食物照片並為您分析熱量。";
+				INFOPLIST_KEY_LSApplicationCategoryType = "Privacy - Photo Library Usage Description";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to capture food photos for calorie analysis.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need access to your weight and steps to provide accurate recommendations.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need permission to write nutrition data to the Health App.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "We use your step count to calculate your Total Daily Energy Expenditure (TDEE).";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need photo library access to select food photos.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -538,7 +550,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.1;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = tw.yian.AICalorieEstimator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

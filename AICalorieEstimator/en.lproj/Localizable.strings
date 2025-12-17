@@ -27,3 +27,83 @@
 "error.no_connection" = "Cannot connect to server. Please check your network connection.";
 "error.json_decode" = "Data parsing error. Please retry.";
 "error.pro_required" = "You need to upgrade to Pro to use the AI analysis feature.";
+
+/* Result View New Keys */
+"result.calorie_estimate" = "Calorie Estimate";
+"result.nutrition_distribution" = "Macronutrients";
+"result.protein" = "Protein";
+"result.carbs" = "Carbs";
+"result.fat" = "Fat";
+"result.ai_comment" = "AI Insight";
+"result.smart_analysis" = "Smart Analysis";
+"result.health_advice" = "Health Tip";
+
+/* Subscription Status */
+"status.pro_active" = "Status: Pro Unlocked!";
+"status.free_remaining %lld" = "Free trials remaining: %lld";
+"status.free_exhausted" = "Limit reached. Upgrade to continue.";
+"status.upgrade_pro" = "Upgrade to Pro";
+"status.restore" = "Restore";
+"status.manage" = "Manage";
+
+/* Server Status */
+"status.server.unknown" = "Tap to Check";
+"status.server.checking" = "Connecting...";
+"status.server.online" = "System Normal";
+"status.server.offline" = "Server Offline";
+
+/* User Profile */
+"profile.title" = "Personal Diet Settings";
+"profile.height" = "Height (cm)";
+"profile.weight" = "Weight (kg)";
+"profile.target" = "Target Weight (kg)";
+"profile.sync_health" = "Sync Apple Health";
+"profile.summary_bmi" = "BMI: ";
+"profile.summary_target" = "Target: ";
+
+/* User Profile */
+"profile.title" = "Personal Diet Settings";
+"profile.height" = "Height (cm)";
+"profile.weight" = "Weight (kg)";
+"profile.target" = "Target Weight (kg)";
+"profile.sync_health" = "Sync Apple Health";
+"profile.summary_bmi" = "BMI: ";
+"profile.summary_target" = "Target: ";
+
+/* Nutrition Advice */
+"advice.cal_high" = "⚠️ High calories (~%lld%% of daily). Suggest a lighter next meal.";
+"advice.cal_low" = "🟢 Low calorie, good for a snack.";
+"advice.cal_good" = "✅ Moderate calories. Fits your plan!";
+
+"advice.high_protein" = "💪 High Protein! Great for muscle repair and satiety.";
+"advice.high_fat" = "💧 High Fat content. Stay hydrated or drink tea to aid metabolism.";
+"advice.high_carb" = "⚡️ High Carbs. A short walk after eating helps stabilize blood sugar.";
+
+"advice.micronutrient.veg" = "🥬 Veggies detected: Rich in Fiber and Potassium for gut health.";
+"advice.micronutrient.fruit" = "🍎 Fruit detected: Good source of Vitamin C and antioxidants.";
+"advice.micronutrient.seafood" = "🐟 Seafood detected: Rich in Omega-3 and Zinc for immunity.";
+"advice.micronutrient.meat" = "🥩 Meat detected: Good source of Iron and Vitamin B12.";
+"advice.micronutrient.dairy" = "🥛 Dairy detected: Provides Calcium and Vitamin D for bone health.";
+"advice.micronutrient.nuts" = "🥜 Nuts detected: Rich in Magnesium and healthy fats.";
+
+"advice.bmi_watch" = "(Note: BMI is slightly high, watch your refined carbs.)";
+
+/* Nutrition Advice */
+"advice.cal_high" = "⚠️ High calories (~%lld%% of daily). Suggest a lighter next meal.";
+"advice.cal_low" = "🟢 Low calorie, good for a snack.";
+"advice.cal_good" = "✅ Moderate calories. Fits your plan!";
+
+"advice.high_protein" = "💪 High Protein! Great for muscle repair and satiety.";
+"advice.high_fat" = "💧 High Fat content. Stay hydrated or drink tea to aid metabolism.";
+"advice.high_carb" = "⚡️ High Carbs. A short walk after eating helps stabilize blood sugar.";
+
+"advice.micronutrient.veg" = "🥬 Veggies detected: Rich in Fiber and Potassium for gut health.";
+"advice.micronutrient.fruit" = "🍎 Fruit detected: Good source of Vitamin C and antioxidants.";
+"advice.micronutrient.seafood" = "🐟 Seafood detected: Rich in Omega-3 and Zinc for immunity.";
+"advice.micronutrient.meat" = "🥩 Meat detected: Good source of Iron and Vitamin B12.";
+"advice.micronutrient.dairy" = "🥛 Dairy detected: Provides Calcium and Vitamin D for bone health.";
+"advice.micronutrient.nuts" = "🥜 Nuts detected: Rich in Magnesium and healthy fats.";
+
+"advice.bmi_watch" = "(Note: BMI is slightly high, watch your refined carbs.)";
+
+"profile.steps_today %lld" = "Today's Steps: %lld";
