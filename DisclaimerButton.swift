@@ -2,15 +2,16 @@ import SwiftUI
 
 struct DisclaimerButton: View {
     let renderAsCard: Bool
+    let language: AppLanguage
     @State private var showDisclaimer = false
 
-    private let zhTW = "本應用程式提供的估算結果僅供參考，並非醫療建議。在使用任何飲食計畫前，請諮詢專業醫師。數據由 AI 模型估算。"
-    private let enUS = "The estimates provided by this app are for reference only and do not constitute medical advice. Please consult a professional doctor before starting any diet plan. Data is estimated by AI models."
-    private let jaJP = "本アプリの推定結果はあくまで参考であり、医療的な助言ではありません。食事計画を始める前に、必ず医師にご相談ください。データはAIモデルによって算出されています。"
-
-    init(renderAsCard: Bool = false) {
+    init(renderAsCard: Bool = false, language: AppLanguage = .unitedStates) {
         self.renderAsCard = renderAsCard
+        self.language = language
     }
+
+    private var title: String { TranslationManager.get("disclaimer.title", lang: language) }
+    private var message: String { TranslationManager.get("disclaimer.message", lang: language) }
 
     var body: some View {
         Button {
@@ -18,48 +19,39 @@ struct DisclaimerButton: View {
         } label: {
             if renderAsCard {
                 HStack(spacing: 8) {
-                    Text("Disclaimer")
+                    Text(title)
                     Spacer()
                     Image(systemName: "chevron.right").font(.footnote)
                 }
                 .font(.footnote)
                 .padding(12)
-                .background(Color.gray.opacity(0.12))
-                .cornerRadius(10)
+                    .background(Color.gray.opacity(0.12))
+                    .cornerRadius(10)
             } else {
-                Text("免責聲明 / Disclaimer")
+                Text(title)
             }
         }
         .sheet(isPresented: $showDisclaimer) {
             NavigationStack {
                 List {
                     Section {
-                        DisclosureGroup("繁體中文") {
-                            Text(zhTW).font(.body).padding(.vertical, 4)
-                        }
-                        DisclosureGroup("English") {
-                            Text(enUS).font(.body).padding(.vertical, 4)
-                        }
-                        DisclosureGroup("日本語") {
-                            Text(jaJP).font(.body).padding(.vertical, 4)
-                        }
+                        Text(message).font(.body).padding(.vertical, 4)
                     } header: {
-                        Text("免責聲明 / Disclaimer")
+                        Text(title)
                     }
 
                     Section {
                         Button {
-                            let all = "【繁體中文】\n\(zhTW)\n\n【English】\n\(enUS)\n\n【日本語】\n\(jaJP)"
-                            UIPasteboard.general.string = all
+                            UIPasteboard.general.string = message
                         } label: {
-                            Label("複製全部", systemImage: "doc.on.doc")
+                            Label(TranslationManager.get("disclaimer.copy_all", lang: language), systemImage: "doc.on.doc")
                         }
                     }
                 }
-                .navigationTitle("免責聲明")
+                .navigationTitle(title)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("關閉") { showDisclaimer = false }
+                        Button(TranslationManager.get("disclaimer.close", lang: language)) { showDisclaimer = false }
                     }
                 }
             }

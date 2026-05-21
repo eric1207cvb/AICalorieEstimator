@@ -27,7 +27,7 @@
 "error.timeout" = "網路連線超時，請檢查伺服器狀態。";
 "error.no_connection" = "無法連接伺服器，請檢查網路連線。";
 "error.json_decode" = "資料解析錯誤，請重試。";
-"error.pro_required" = "您需要升級至 Pro 專業版，才能使用 AI 分析功能。";
+"error.pro_required" = "您需要升級至專業版，才能使用智慧分析功能。";
 
 /* Result View New Keys */
 "result.calorie_estimate" = "熱量估算";
@@ -40,18 +40,18 @@
 "result.health_advice" = "健康建議";
 
 /* 訂閱狀態 */
-"status.pro_active" = "會員狀態：專業版 (Pro) 已解鎖！";
+"status.pro_active" = "會員狀態：專業版已解鎖！";
 "status.free_remaining %lld" = "免費試用剩餘次數：%lld 次";
 "status.free_exhausted" = "免費額度已用完。請升級以繼續使用。";
-"status.upgrade_pro" = "升級 Pro 版";
+"status.upgrade_pro" = "升級專業版";
 "status.restore" = "恢復購買";
 "status.manage" = "管理訂閱";
 
 /* 訂閱狀態 */
-"status.pro_active" = "會員狀態：專業版 (Pro) 已解鎖！";
+"status.pro_active" = "會員狀態：專業版已解鎖！";
 "status.free_remaining %lld" = "免費試用剩餘次數：%lld 次";
 "status.free_exhausted" = "免費額度已用完。請升級以繼續使用。";
-"status.upgrade_pro" = "升級 Pro 版";
+"status.upgrade_pro" = "升級專業版";
 "status.restore" = "恢復購買";
 "status.manage" = "管理訂閱";
 

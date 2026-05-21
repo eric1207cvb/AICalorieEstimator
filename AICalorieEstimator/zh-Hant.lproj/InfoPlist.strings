@@ -1,0 +1,5 @@
+"NSCameraUsageDescription" = "用來拍攝餐點照片，協助估算熱量與建立飲食紀錄。";
+"NSPhotoLibraryUsageDescription" = "用來選取餐點照片，協助估算熱量與建立飲食紀錄。";
+"NSMotionUsageDescription" = "用來讀取你允許的活動資料，協助估算每日熱量需求。";
+"NSHealthShareUsageDescription" = "用來讀取你允許的健康資料，例如步數、活動能量、運動、身高與體重，協助估算每日熱量需求與飲食紀錄。";
+"NSHealthUpdateUsageDescription" = "只有在你主動選擇儲存時，才會將飲食營養或身體量測紀錄加入健康 App。";

@@ -1,0 +1,5 @@
+"NSCameraUsageDescription" = "食事の写真を撮影し、カロリー推定と食事記録に使用します。";
+"NSPhotoLibraryUsageDescription" = "写真ライブラリから食事の写真を選択し、カロリー推定と食事記録に使用します。";
+"NSMotionUsageDescription" = "許可された活動データを使用して、1日のカロリー目安の推定に役立てます。";
+"NSHealthShareUsageDescription" = "許可されたヘルスケアデータ（歩数、活動エネルギー、ワークアウト、身長、体重など）を読み取り、1日のカロリー目安の推定と食事記録に使用します。";
+"NSHealthUpdateUsageDescription" = "アプリで保存を選択した場合のみ、栄養または身体測定の記録をヘルスケアに追加します。";

@@ -74,6 +74,9 @@
             ReferencedContainer = "container:AICalorieEstimator.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <StoreKitConfigurationFileReference
+         identifier = "../../AICalorieEstimator/StoreKit/AICalorieEstimator.storekit">
+      </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

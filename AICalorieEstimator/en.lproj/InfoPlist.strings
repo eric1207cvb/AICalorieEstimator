@@ -1,0 +1,5 @@
+"NSCameraUsageDescription" = "Use the camera to photograph meals for calorie estimates and food logging.";
+"NSPhotoLibraryUsageDescription" = "Select meal photos from your library for calorie estimates and food logging.";
+"NSMotionUsageDescription" = "Use activity data you allow to help estimate daily calorie needs.";
+"NSHealthShareUsageDescription" = "Read the Health data you allow, such as steps, active energy, workouts, height, and weight, to help estimate daily calorie needs and support food logging.";
+"NSHealthUpdateUsageDescription" = "Add nutrition or body-measurement records to Health only when you choose to save them from the app.";

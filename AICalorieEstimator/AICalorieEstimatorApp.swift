@@ -5,34 +5,41 @@ import RevenueCat
 struct AICalorieEstimatorApp: App {
     // 1. 嘗試從 UserDefaults 讀取使用者上次「手動切換」的語言
     @AppStorage("user_selected_language_v2") private var savedLanguageCode: String = ""
-    
+    @AppStorage("user_has_selected_language_v2") private var hasUserSelectedLanguage: Bool = false
+
     // 2. App 運行時的語言狀態
-    @State private var selectedLanguage: AppLanguage = .english
+    @State private var selectedLanguage: AppLanguage = .unitedStates
     
     init() {
         // 設定 RevenueCat API Key
+        #if DEBUG
         Purchases.logLevel = .debug
+        #endif
         
-        // [Fix] 已填入您提供的正確 API Key，這將解決 401 錯誤
         Purchases.configure(withAPIKey: "appl_jOygYGBHCEIfADYbuaAaxYQNdgE")
     }
     
     var body: some Scene {
         WindowGroup {
-            ContentView(selectedLanguage: $selectedLanguage)
-                .onAppear {
-                    // 🚀 App 啟動時的語言決定邏輯
-                    if let saved = AppLanguage(rawValue: savedLanguageCode) {
-                        // A. 如果使用者之前有手動選過，就用他選的
-                        selectedLanguage = saved
-                    } else {
-                        // B. 如果是第一次打開 (或沒選過)，就自動偵測系統語言
-                        selectedLanguage = AppLanguage.systemPreferred
+            ContentView(
+                selectedLanguage: Binding(
+                    get: { selectedLanguage },
+                    set: { newValue in
+                        selectedLanguage = newValue
+                        savedLanguageCode = newValue.rawValue
+                        hasUserSelectedLanguage = true
                     }
-                }
-                .onChange(of: selectedLanguage) { _, newValue in
-                    // 當使用者在 App 內切換語言時，立刻存檔
-                    savedLanguageCode = newValue.rawValue
+                )
+            )
+                .onAppear {
+                    let resolved = AppLanguage.initialSelection(
+                        savedRawValue: savedLanguageCode,
+                        hasUserSelectedPreference: hasUserSelectedLanguage,
+                        systemPreferred: AppLanguage.systemPreferred
+                    )
+                    selectedLanguage = resolved.language
+                    hasUserSelectedLanguage = resolved.shouldPersistAsUserPreference
+                    savedLanguageCode = resolved.shouldPersistAsUserPreference ? resolved.language.rawValue : ""
                 }
         }
     }

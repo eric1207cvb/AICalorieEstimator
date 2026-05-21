@@ -26,7 +26,7 @@
 "error.timeout" = "ネットワーク接続がタイムアウトしました。サーバー状態を確認してください。";
 "error.no_connection" = "サーバーに接続できません。ネットワーク接続を確認してください。";
 "error.json_decode" = "データ解析エラーです。再試行してください。";
-"error.pro_required" = "AI分析機能をご利用いただくには、Proプレミアムへのアップグレードが必要です。";
+"error.pro_required" = "食事分析機能をご利用いただくには、有料プランへのアップグレードが必要です。";
 
 /* Result View New Keys */
 "result.calorie_estimate" = "カロリー推定";
@@ -39,10 +39,10 @@
 "result.health_advice" = "健康のヒント";
 
 /* Subscription Status */
-"status.pro_active" = "ステータス：Pro版";
+"status.pro_active" = "ステータス：有料プラン有効";
 "status.free_remaining %lld" = "無料トライアル残り：%lld 回";
 "status.free_exhausted" = "無料分を使い切りました。";
-"status.upgrade_pro" = "Proにアップグレード";
+"status.upgrade_pro" = "有料プランへ";
 "status.restore" = "購入を復元";
 "status.manage" = "管理";
 

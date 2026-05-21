@@ -1,0 +1,128 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "zh_TW",
+        "policyText" : "",
+        "policyURL" : ""
+      },
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      },
+      {
+        "locale" : "ja_JP",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "A1C0F00D",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_locale" : "zh_TW",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "TWN",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "A1C0D1ET",
+      "localizations" : [
+
+      ],
+      "name" : "AICalorieEstimator Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "120.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "A1C0M0N1",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "解鎖無限次 AI 飲食分析與更完整的熱量估算。",
+              "displayName" : "AI 熱量估算專業版月訂閱",
+              "locale" : "zh_TW"
+            },
+            {
+              "description" : "Unlock unlimited AI food analysis and fuller calorie estimates.",
+              "displayName" : "AI Calorie Estimator Pro Monthly",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "AI食事分析を無制限に利用し、より詳しいカロリー推定を確認できます。",
+              "displayName" : "AIカロリー推定 有料月額プラン",
+              "locale" : "ja_JP"
+            }
+          ],
+          "productID" : "tw.yian.AICalorieEstimator.pro.monthly.final",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "AICalorieEstimator Pro Monthly",
+          "subscriptionGroupID" : "A1C0D1ET",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "1200.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "A1C0Y3AR",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "解鎖全年 AI 飲食分析與更完整的熱量估算。",
+              "displayName" : "AI 熱量估算專業版年訂閱",
+              "locale" : "zh_TW"
+            },
+            {
+              "description" : "Unlock one year of AI food analysis and fuller calorie estimates.",
+              "displayName" : "AI Calorie Estimator Pro Annual",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "1年分のAI食事分析と詳しいカロリー推定を利用できます。",
+              "displayName" : "AIカロリー推定 有料年額プラン",
+              "locale" : "ja_JP"
+            }
+          ],
+          "productID" : "tw.yian.AICalorieEstimator.pro.annual.final",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "AICalorieEstimator Pro Annual",
+          "subscriptionGroupID" : "A1C0D1ET",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
