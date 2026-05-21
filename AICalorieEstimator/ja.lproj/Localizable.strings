@@ -5,6 +5,39 @@
 "button.take_photo" = "写真を撮る";
 "button.select_album" = "アルバムから選択";
 "button.health_check" = "接続テスト";
+"camera.close" = "カメラを閉じる";
+"meal_timing.title" = "食事リズムと通知";
+"meal_timing.subtitle" = "写真分析を毎日の食事記録につなげ、3食の通知にも使えます。";
+"meal_timing.pro_badge" = "有料";
+"meal_timing.locked_note" = "有料プランで3食の記録通知と16:8の時間管理を利用できます。";
+"meal_timing.locked_note_three_meals" = "有料プランで朝食・昼食・夕食の記録通知を利用できます。";
+"meal_timing.unlock" = "通知を解放";
+"meal_timing.mode" = "記録モード";
+"meal_timing.three_meals" = "3食リマインド";
+"meal_timing.three_meals_detail" = "朝食・昼食・夕食を個別に記録通知します。";
+"meal_timing.fasting_168" = "16:8 時間管理";
+"meal_timing.fasting_168_detail" = "一般的な体重管理記録として食事可能時間の開始・終了を設定します。";
+"meal_timing.reminders_enabled" = "通知をオン";
+"meal_timing.reminders_off" = "通知はオフです。時間設定は保存されます。";
+"meal_timing.reminders_on" = "通知を設定しました。いつでもオフや時間変更ができます。";
+"meal_timing.notification_denied" = "通知が許可されていません。iOS設定で許可するか、通知をオフにしてください。";
+"meal_timing.breakfast" = "朝食";
+"meal_timing.lunch" = "昼食";
+"meal_timing.dinner" = "夕食";
+"meal_timing.fasting_start" = "食事可能時間の開始";
+"meal_timing.fasting_end" = "食事可能時間の終了";
+"meal_timing.window_summary" = "食事可能時間：約 %.1f 時間";
+"meal_timing.window_hint" = "16:8は通常、約8時間の食事可能時間です。生活に合わせ、不調があれば中止してください。";
+"meal_timing.notification.breakfast_title" = "朝食記録の通知";
+"meal_timing.notification.breakfast_body" = "設定した朝食時間です。写真を撮るか選んで記録しましょう。";
+"meal_timing.notification.lunch_title" = "昼食記録の通知";
+"meal_timing.notification.lunch_body" = "昼食時間です。記録すると今日のカロリー管理がしやすくなります。";
+"meal_timing.notification.dinner_title" = "夕食記録の通知";
+"meal_timing.notification.dinner_body" = "夕食の通知時間です。記録すると今日の摂取量を確認しやすくなります。";
+"meal_timing.notification.fasting_start_title" = "16:8 食事可能時間の開始";
+"meal_timing.notification.fasting_start_body" = "設定した食事可能時間が始まりました。最初の食事を記録しましょう。";
+"meal_timing.notification.fasting_end_title" = "16:8 食事可能時間の終了";
+"meal_timing.notification.fasting_end_body" = "設定した食事可能時間が終了しました。今日の食事記録を確認しましょう。";
 
 /* Interface Labels */
 "label.analysis_result" = "分析結果";
@@ -39,6 +72,7 @@
 "result.health_advice" = "健康のヒント";
 
 /* Subscription Status */
+"paywall.price.monthly_market" = "¥300.00";
 "status.pro_active" = "ステータス：有料プラン有効";
 "status.free_remaining %lld" = "無料トライアル残り：%lld 回";
 "status.free_exhausted" = "無料分を使い切りました。";

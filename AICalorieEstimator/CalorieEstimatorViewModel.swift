@@ -5,6 +5,7 @@ import HealthKit
 import Vision
 import ImageIO
 import RevenueCat
+import UserNotifications
 
 struct ImageTextRecognizer {
     static func recognizeText(from image: UIImage) async -> String? {
@@ -97,6 +98,72 @@ struct UserProfilePreferenceStore {
     }
 }
 
+enum MealTimingScheduleOutcome {
+    case scheduled
+    case disabled
+    case denied
+}
+
+struct MealTimingNotificationScheduler {
+    private let center = UNUserNotificationCenter.current()
+
+    func apply(settings: MealTimingSettings, isActive: Bool, language: AppLanguage) async -> MealTimingScheduleOutcome {
+        await cancelAll()
+        guard isActive, settings.remindersEnabled else {
+            return .disabled
+        }
+
+        let isAuthorized = await requestAuthorizationIfNeeded()
+        guard isAuthorized else {
+            return .denied
+        }
+
+        for item in settings.scheduleItems {
+            await schedule(item: item, language: language)
+        }
+        return .scheduled
+    }
+
+    func cancelAll() async {
+        let identifiers = MealReminderKind.allCases.map(\.notificationIdentifier)
+        center.removePendingNotificationRequests(withIdentifiers: identifiers)
+        center.removeDeliveredNotifications(withIdentifiers: identifiers)
+    }
+
+    private func requestAuthorizationIfNeeded() async -> Bool {
+        let settings = await notificationSettings()
+        switch settings.authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            return true
+        case .notDetermined:
+            return (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+        case .denied:
+            return false
+        @unknown default:
+            return false
+        }
+    }
+
+    private func notificationSettings() async -> UNNotificationSettings {
+        await withCheckedContinuation { continuation in
+            center.getNotificationSettings { settings in
+                continuation.resume(returning: settings)
+            }
+        }
+    }
+
+    private func schedule(item: MealReminderScheduleItem, language: AppLanguage) async {
+        let content = UNMutableNotificationContent()
+        content.title = TranslationManager.get(item.kind.titleKey, lang: language)
+        content.body = TranslationManager.get(item.kind.bodyKey, lang: language)
+        content.sound = .default
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: item.time.notificationDateComponents, repeats: true)
+        let request = UNNotificationRequest(identifier: item.kind.notificationIdentifier, content: content, trigger: trigger)
+        try? await center.add(request)
+    }
+}
+
 // MARK: - [Client v9.27] ViewModel (With Gender Sync)
 @MainActor
 class CalorieEstimatorViewModel: NSObject, ObservableObject, PurchasesDelegate {
@@ -111,16 +178,30 @@ class CalorieEstimatorViewModel: NSObject, ObservableObject, PurchasesDelegate {
 
     // MARK: - RevenueCat
     @Published var offerings: Offerings?
-    @Published var isProUser: Bool = false
+    @Published var isProUser: Bool = false {
+        didSet {
+            if oldValue != isProUser {
+                refreshMealTimingSchedule()
+            }
+        }
+    }
     @Published var isShowingPaywall: Bool = false
     @Published var remainingFreeUsage: Int = 3
 
     private let usageKey = "user_free_daily_usage_v1"
+    private static let mealTimingSettingsKey = "user_meal_timing_settings_v1"
     private let freeScanLimiter = FreeScanLimiter(dailyLimit: 3)
     private let profilePreferences = UserProfilePreferenceStore()
+    private let mealTimingScheduler = MealTimingNotificationScheduler()
+    private var mealTimingReminderLanguage: AppLanguage = .traditionalChinese
 
     #if DEBUG
-    @Published var debugBypassPro: Bool = false { didSet { updateUsageCount() } }
+    @Published var debugBypassPro: Bool = false {
+        didSet {
+            updateUsageCount()
+            refreshMealTimingSchedule()
+        }
+    }
     #endif
 
     // MARK: - User Profile
@@ -139,9 +220,22 @@ class CalorieEstimatorViewModel: NSObject, ObservableObject, PurchasesDelegate {
     @Published var goalStartWeight: Double { didSet { UserDefaults.standard.set(goalStartWeight, forKey: "user_goal_start_weight") } }
     @Published var gender: UserGender = .notSet { didSet { UserDefaults.standard.set(gender.rawValue, forKey: "user_gender") } } // [New]
     @Published var activityScenario: ActivityScenario = .mostlySitting { didSet { profilePreferences.save(activityScenario: activityScenario) } }
-    @Published var medicalDietMode: MedicalDietMode = .standard { didSet { profilePreferences.save(medicalDietMode: medicalDietMode) } }
+    @Published var medicalDietMode: MedicalDietMode = .standard {
+        didSet {
+            profilePreferences.save(medicalDietMode: medicalDietMode)
+            refreshMealTimingSchedule()
+        }
+    }
     @Published var diabetesStage: DiabetesStage = .type2NonInsulin { didSet { profilePreferences.save(diabetesStage: diabetesStage) } }
     @Published var ckdStage: CKDStage = .stage3a { didSet { profilePreferences.save(ckdStage: ckdStage) } }
+    @Published var mealTimingSettings: MealTimingSettings {
+        didSet {
+            saveMealTimingSettings()
+            refreshMealTimingSchedule()
+        }
+    }
+    @Published var mealTimingNotificationsScheduled: Bool = false
+    @Published var mealTimingAuthorizationDenied: Bool = false
 
     // MARK: - Health Data
     @Published var stepCount: Int = 0
@@ -192,6 +286,12 @@ class CalorieEstimatorViewModel: NSObject, ObservableObject, PurchasesDelegate {
         } else {
             self.goalStartWeight = savedGoalStartWeight
         }
+        if let data = UserDefaults.standard.data(forKey: Self.mealTimingSettingsKey),
+           let settings = try? JSONDecoder().decode(MealTimingSettings.self, from: data) {
+            self.mealTimingSettings = settings
+        } else {
+            self.mealTimingSettings = .defaultValue
+        }
         // Load gender
         if let savedGender = UserDefaults.standard.string(forKey: "user_gender"), let g = UserGender(rawValue: savedGender) {
             self.gender = g
@@ -234,6 +334,7 @@ class CalorieEstimatorViewModel: NSObject, ObservableObject, PurchasesDelegate {
             group.addTask { await MainActor.run { self.loadHistory() } }
         }
         updateUsageCount()
+        refreshMealTimingSchedule()
         try? await Task.sleep(nanoseconds: 1_500_000_000)
         withAnimation(.easeInOut(duration: 0.6)) { self.isAppLoading = false }
     }
@@ -426,6 +527,48 @@ class CalorieEstimatorViewModel: NSObject, ObservableObject, PurchasesDelegate {
         let hasUnlimitedAccess = isProUser
         #endif
         self.remainingFreeUsage = freeScanLimiter.remainingCount(usage: usage, now: Date(), isPro: hasUnlimitedAccess)
+    }
+
+    var hasMealTimingFeatureAccess: Bool {
+        #if DEBUG
+        return isProUser || debugBypassPro
+        #else
+        return isProUser
+        #endif
+    }
+
+    func updateMealTimingLanguage(_ language: AppLanguage) {
+        guard mealTimingReminderLanguage != language else { return }
+        mealTimingReminderLanguage = language
+        refreshMealTimingSchedule()
+    }
+
+    func requestMealTimingUpgrade() {
+        isShowingPaywall = true
+    }
+
+    private func saveMealTimingSettings() {
+        if let data = try? JSONEncoder().encode(mealTimingSettings) {
+            UserDefaults.standard.set(data, forKey: Self.mealTimingSettingsKey)
+        }
+    }
+
+    private func refreshMealTimingSchedule() {
+        var settings = mealTimingSettings
+        if medicalDietMode != .standard {
+            settings.plan = .threeMeals
+        }
+        let language = mealTimingReminderLanguage
+        let isActive = hasMealTimingFeatureAccess && settings.remindersEnabled
+        let scheduler = mealTimingScheduler
+
+        Task {
+            let outcome = await scheduler.apply(settings: settings, isActive: isActive, language: language)
+            await MainActor.run {
+                self.mealTimingNotificationsScheduled = outcome == .scheduled
+                self.mealTimingAuthorizationDenied = outcome == .denied
+            }
+        }
     }
 
     #if DEBUG

@@ -5,6 +5,39 @@
 "button.take_photo" = "Take Photo";
 "button.select_album" = "Select from Album";
 "button.health_check" = "Test Connection";
+"camera.close" = "Close Camera";
+"meal_timing.title" = "Meal Timing & Reminders";
+"meal_timing.subtitle" = "Connect photo analysis with daily meal logging and three-meal reminders.";
+"meal_timing.pro_badge" = "Pro";
+"meal_timing.locked_note" = "Upgrade to Pro to enable three-meal reminders and 16:8 timing.";
+"meal_timing.locked_note_three_meals" = "Upgrade to Pro to enable breakfast, lunch, and dinner log reminders.";
+"meal_timing.unlock" = "Unlock Reminders";
+"meal_timing.mode" = "Logging Mode";
+"meal_timing.three_meals" = "Three Meals";
+"meal_timing.three_meals_detail" = "Remind breakfast, lunch, and dinner logging separately.";
+"meal_timing.fasting_168" = "16:8 Timing";
+"meal_timing.fasting_168_detail" = "Set eating-window start and end times for general weight-control logging.";
+"meal_timing.reminders_enabled" = "Enable Reminders";
+"meal_timing.reminders_off" = "Reminders are off. Your time settings are still saved.";
+"meal_timing.reminders_on" = "Reminders are scheduled. You can turn them off or adjust times anytime.";
+"meal_timing.notification_denied" = "Notifications are not allowed yet. Enable them in iOS Settings or turn reminders off.";
+"meal_timing.breakfast" = "Breakfast";
+"meal_timing.lunch" = "Lunch";
+"meal_timing.dinner" = "Dinner";
+"meal_timing.fasting_start" = "Eating Window Starts";
+"meal_timing.fasting_end" = "Eating Window Ends";
+"meal_timing.window_summary" = "Eating window: about %.1f hours";
+"meal_timing.window_hint" = "16:8 usually uses an eating window near 8 hours. Adjust to your routine and stop if it does not feel right.";
+"meal_timing.notification.breakfast_title" = "Breakfast Log Reminder";
+"meal_timing.notification.breakfast_body" = "It is your breakfast time. Take or choose a photo to log this meal.";
+"meal_timing.notification.lunch_title" = "Lunch Log Reminder";
+"meal_timing.notification.lunch_body" = "Lunch time. Logging your meal keeps today's calories more complete.";
+"meal_timing.notification.dinner_title" = "Dinner Log Reminder";
+"meal_timing.notification.dinner_body" = "Dinner reminder time. Logging now helps complete today's intake record.";
+"meal_timing.notification.fasting_start_title" = "16:8 Eating Window Starts";
+"meal_timing.notification.fasting_start_body" = "Your eating window has started. Logging the first meal helps track today's intake.";
+"meal_timing.notification.fasting_end_title" = "16:8 Eating Window Ends";
+"meal_timing.notification.fasting_end_body" = "Your eating window has ended. Check whether today's meal logs are complete.";
 
 /* Interface Labels */
 "label.analysis_result" = "Analysis Result";
@@ -39,6 +72,7 @@
 "result.health_advice" = "Health Tip";
 
 /* Subscription Status */
+"paywall.price.monthly_market" = "$1.99";
 "status.pro_active" = "Status: Pro Unlocked!";
 "status.free_remaining %lld" = "Free trials remaining: %lld";
 "status.free_exhausted" = "Limit reached. Upgrade to continue.";

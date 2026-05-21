@@ -24,6 +24,10 @@ struct ContentView: View {
     @State private var pendingMealLogPayload: CloudResponsePayload? = nil
     @State private var isShowingMealLogConfirmation = false
     @State private var isShowingDeleteMealLogConfirmation = false
+    @State private var didResolveInitialPhoneLayout = false
+    @State private var usesReturningUserPhoneLayout = false
+    @AppStorage("has_seen_initial_phone_layout_v1") private var hasSeenInitialPhoneLayout = false
+    @AppStorage("has_confirmed_medical_diet_mode_v1") private var hasConfirmedMedicalDietMode = false
 
     var todayCaloriesIntake: Int {
         let today = Calendar.current.startOfDay(for: Date())
@@ -44,6 +48,10 @@ struct ContentView: View {
 
     private var profileNeedsSetup: Bool {
         viewModel.height <= 0 || viewModel.currentWeight <= 0 || viewModel.targetWeight <= 0 || viewModel.gender == .notSet
+    }
+
+    private var profileSetupComplete: Bool {
+        !profileNeedsSetup && hasConfirmedMedicalDietMode
     }
 
     private var shouldUseSingleColumnLayout: Bool {
@@ -89,11 +97,28 @@ struct ContentView: View {
         }
         .id(selectedLanguage)
         .environment(\.locale, Locale(identifier: selectedLanguage.localeIdentifier))
-        .onAppear(perform: autoExpandProfileEditorIfNeeded)
-        .onChange(of: viewModel.isAppLoading) { _, _ in
+        .onAppear {
+            resolveInitialPhoneLayoutIfNeeded()
             autoExpandProfileEditorIfNeeded()
+            collapseProfileEditorAfterSetupIfNeeded(animated: false)
+            viewModel.updateMealTimingLanguage(selectedLanguage)
         }
-        .sheet(isPresented: $isShowingCamera) { CameraPickerView(selectedImage: $selectedUIImage) }
+        .onChange(of: selectedLanguage) { _, newLanguage in
+            viewModel.updateMealTimingLanguage(newLanguage)
+        }
+        .onChange(of: viewModel.isAppLoading) { _, _ in
+            resolveInitialPhoneLayoutIfNeeded()
+            autoExpandProfileEditorIfNeeded()
+            collapseProfileEditorAfterSetupIfNeeded(animated: true)
+        }
+        .onChange(of: profileSetupComplete) { _, isComplete in
+            guard isComplete else { return }
+            collapseProfileEditorAfterSetupIfNeeded(animated: true)
+        }
+        .fullScreenCover(isPresented: $isShowingCamera) {
+            CameraPickerView(selectedImage: $selectedUIImage)
+                .ignoresSafeArea()
+        }
         .onChange(of: photosPickerItem) { _, newItem in
             Task {
                 if let data = try? await newItem?.loadTransferable(type: Data.self), let uiImage = UIImage(data: data) {
@@ -214,10 +239,62 @@ struct ContentView: View {
     }
 
     private func phoneMainContent(profile: UserProfile, limit: Int) -> some View {
+        Group {
+            if usesReturningUserPhoneLayout {
+                returningPhoneMainContent(profile: profile, limit: limit)
+            } else {
+                onboardingPhoneMainContent(profile: profile, limit: limit)
+            }
+        }
+    }
+
+    private func onboardingPhoneMainContent(profile: UserProfile, limit: Int) -> some View {
         VStack(spacing: 20) {
             statusSection
                 .padding(.horizontal)
                 .padding(.top, 10)
+
+            profileSection
+                .padding(.horizontal)
+
+            photoAnalysisSection(profile: profile, height: phonePhotoHeight)
+                .padding(.horizontal)
+
+            resultArea(profile: profile)
+                .padding(.horizontal)
+
+            CalorieRingView(intake: todayCaloriesIntake, limit: limit, language: selectedLanguage)
+                .padding(.horizontal)
+
+            SmartCoachView(profile: profile, todayCalories: todayCaloriesIntake, language: selectedLanguage)
+                .padding(.horizontal)
+
+            mealTimingSection(profile: profile)
+                .padding(.horizontal)
+
+            watchSection
+                .padding(.horizontal)
+
+            weeklySection(limit: limit)
+                .padding(.horizontal)
+
+            footerSection
+                .padding(.bottom)
+        }
+        .padding(.vertical)
+    }
+
+    private func returningPhoneMainContent(profile: UserProfile, limit: Int) -> some View {
+        VStack(spacing: 20) {
+            statusSection
+                .padding(.horizontal)
+                .padding(.top, 10)
+
+            photoAnalysisSection(profile: profile, height: phonePhotoHeight)
+                .padding(.horizontal)
+
+            resultArea(profile: profile)
+                .padding(.horizontal)
 
             profileSection
                 .padding(.horizontal)
@@ -228,16 +305,13 @@ struct ContentView: View {
             SmartCoachView(profile: profile, todayCalories: todayCaloriesIntake, language: selectedLanguage)
                 .padding(.horizontal)
 
+            mealTimingSection(profile: profile)
+                .padding(.horizontal)
+
             watchSection
                 .padding(.horizontal)
 
             weeklySection(limit: limit)
-                .padding(.horizontal)
-
-            photoAnalysisSection(profile: profile, height: phonePhotoHeight)
-                .padding(.horizontal)
-
-            resultArea(profile: profile)
                 .padding(.horizontal)
 
             footerSection
@@ -252,6 +326,7 @@ struct ContentView: View {
             profileSection
             CalorieRingView(intake: todayCaloriesIntake, limit: limit, language: selectedLanguage)
             SmartCoachView(profile: profile, todayCalories: todayCaloriesIntake, language: selectedLanguage)
+            mealTimingSection(profile: profile)
             watchSection
             weeklySection(limit: limit)
             footerSection
@@ -294,6 +369,19 @@ struct ContentView: View {
         )
     }
 
+    @ViewBuilder
+    private func mealTimingSection(profile: UserProfile) -> some View {
+        MealTimingControlCard(
+            settings: $viewModel.mealTimingSettings,
+            medicalDietMode: profile.medicalDietMode,
+            isPro: viewModel.hasMealTimingFeatureAccess,
+            notificationsScheduled: viewModel.mealTimingNotificationsScheduled,
+            authorizationDenied: viewModel.mealTimingAuthorizationDenied,
+            language: selectedLanguage,
+            onUpgrade: { viewModel.requestMealTimingUpgrade() }
+        )
+    }
+
     private func photoAnalysisSection(profile: UserProfile, height: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Label(TranslationManager.get("photo.section_title", lang: selectedLanguage), systemImage: "camera.viewfinder")
@@ -321,6 +409,7 @@ struct ContentView: View {
             medicalDietMode: $viewModel.medicalDietMode,
             diabetesStage: $viewModel.diabetesStage,
             ckdStage: $viewModel.ckdStage,
+            hasConfirmedMedicalDietMode: $hasConfirmedMedicalDietMode,
             goalStartWeight: viewModel.goalStartWeight,
             stepCount: viewModel.stepCount,
             basalEnergy: viewModel.basalEnergy,
@@ -503,6 +592,29 @@ struct ContentView: View {
             isEditingProfile = true
         }
     }
+
+    private func collapseProfileEditorAfterSetupIfNeeded(animated: Bool) {
+        guard !viewModel.isAppLoading, profileSetupComplete, isEditingProfile else { return }
+
+        let update = {
+            isEditingProfile = false
+        }
+
+        if animated {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                update()
+            }
+        } else {
+            update()
+        }
+    }
+
+    private func resolveInitialPhoneLayoutIfNeeded() {
+        guard !didResolveInitialPhoneLayout, !viewModel.isAppLoading else { return }
+        didResolveInitialPhoneLayout = true
+        usesReturningUserPhoneLayout = hasSeenInitialPhoneLayout || !profileNeedsSetup
+        hasSeenInitialPhoneLayout = true
+    }
 }
 
 struct LanguageSwitcherButton: View {
@@ -545,6 +657,7 @@ struct HealthDashboardView: View {
     @Binding var medicalDietMode: MedicalDietMode
     @Binding var diabetesStage: DiabetesStage
     @Binding var ckdStage: CKDStage
+    @Binding var hasConfirmedMedicalDietMode: Bool
     var goalStartWeight: Double
     var stepCount: Int
     var basalEnergy: Double
@@ -556,6 +669,21 @@ struct HealthDashboardView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var profile: UserProfile { UserProfile(height: height, currentWeight: weight, targetWeight: target, stepCount: stepCount, basalEnergy: basalEnergy, gender: gender, activeEnergy: activeEnergy, activityScenario: activityScenario, medicalDietMode: medicalDietMode, diabetesStage: diabetesStage, ckdStage: ckdStage) }
+
+    private var isRequiredProfileComplete: Bool {
+        height > 0 && weight > 0 && target > 0 && gender != .notSet
+    }
+
+    private var canAutoCollapseProfileEditor: Bool {
+        isRequiredProfileComplete && hasConfirmedMedicalDietMode
+    }
+
+    private func collapseProfileEditorIfReady() {
+        guard canAutoCollapseProfileEditor, isExpanded else { return }
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            isExpanded = false
+        }
+    }
 
     // UI Helper for numeric inputs
     private func inputContainer<Content: View>(label: String, @ViewBuilder content: () -> Content) -> some View {
@@ -616,6 +744,8 @@ struct HealthDashboardView: View {
 
         return Button {
             medicalDietMode = mode
+            hasConfirmedMedicalDietMode = true
+            collapseProfileEditorIfReady()
         } label: {
             VStack(spacing: 6) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : medicalModeIcon(mode))
@@ -666,6 +796,56 @@ struct HealthDashboardView: View {
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
+    }
+
+    private var compactMedicalModeShortcuts: some View {
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(spacing: 8) {
+                    ForEach(MedicalDietMode.allCases) { mode in
+                        compactMedicalModeShortcut(mode)
+                    }
+                }
+            } else {
+                HStack(spacing: 8) {
+                    ForEach(MedicalDietMode.allCases) { mode in
+                        compactMedicalModeShortcut(mode)
+                    }
+                }
+            }
+        }
+    }
+
+    private func compactMedicalModeShortcut(_ mode: MedicalDietMode) -> some View {
+        let isSelected = medicalDietMode == mode
+        let tint = medicalModeTint(mode)
+
+        return Button {
+            medicalDietMode = mode
+            hasConfirmedMedicalDietMode = true
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : medicalModeIcon(mode))
+                    .font(.caption.weight(.semibold))
+                Text(mode.label(lang: language))
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 52 : 42)
+            .padding(.horizontal, 8)
+            .foregroundStyle(isSelected ? tint : .secondary)
+            .background(
+                Capsule()
+                    .fill(isSelected ? tint.opacity(0.14) : Color(UIColor.systemBackground))
+            )
+            .overlay(
+                Capsule()
+                    .stroke(isSelected ? tint.opacity(0.65) : Color.gray.opacity(0.16), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private func sectionHeader(title: String, subtitle: String, icon: String, tint: Color) -> some View {
@@ -876,9 +1056,10 @@ struct HealthDashboardView: View {
     private var goalProgressSection: some View {
         if target > 0, weight > 0, abs(target - weight) >= 0.1 {
             let progress = WeightGoalProgress.progress(startWeight: goalStartWeight, currentWeight: weight, targetWeight: target)
+            let safeProgress = progress.isFinite ? min(max(progress, 0), 1) : 0
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("\(TranslationManager.get("health.goal_progress", lang: language)): \(Int((progress * 100).rounded()))%")
+                    Text("\(TranslationManager.get("health.goal_progress", lang: language)): \(Int((safeProgress * 100).rounded()))%")
                         .font(.caption)
                         .bold()
                         .foregroundStyle(target < weight ? .green : .blue)
@@ -891,10 +1072,11 @@ struct HealthDashboardView: View {
                         .foregroundStyle(.secondary)
                 }
                 GeometryReader { geo in
+                    let width = max(geo.size.width, 0)
                     ZStack(alignment: .leading) {
                         Capsule().fill(Color.gray.opacity(0.2)).frame(height: 8)
                         Capsule().fill(target < weight ? Color.green : Color.blue)
-                            .frame(width: geo.size.width * progress, height: 8)
+                            .frame(width: width * safeProgress, height: 8)
                     }
                 }
                 .frame(height: 8)
@@ -1006,11 +1188,333 @@ struct HealthDashboardView: View {
                 }
                 .padding()
                 .background(Color(UIColor.secondarySystemBackground))
+            } else {
+                Divider()
+                compactMedicalModeShortcuts
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                    .background(Color(UIColor.secondarySystemBackground))
             }
         }
         .cornerRadius(16)
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.gray.opacity(0.1), lineWidth: 1))
+        .onAppear {
+            collapseProfileEditorIfReady()
+        }
+        .onChange(of: isRequiredProfileComplete) { _, isComplete in
+            guard isComplete else { return }
+            collapseProfileEditorIfReady()
+        }
+        .onChange(of: hasConfirmedMedicalDietMode) { _, isConfirmed in
+            guard isConfirmed else { return }
+            collapseProfileEditorIfReady()
+        }
     }
+}
+
+struct MealTimingControlCard: View {
+    @Binding var settings: MealTimingSettings
+    let medicalDietMode: MedicalDietMode
+    let isPro: Bool
+    let notificationsScheduled: Bool
+    let authorizationDenied: Bool
+    let language: AppLanguage
+    let onUpgrade: () -> Void
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var allowsFastingPlan: Bool {
+        medicalDietMode == .standard
+    }
+
+    private var effectivePlan: MealTimingPlan {
+        allowsFastingPlan ? settings.plan : .threeMeals
+    }
+
+    private var availablePlans: [MealTimingPlan] {
+        allowsFastingPlan ? MealTimingPlan.allCases : [.threeMeals]
+    }
+
+    private var timeControlItems: [MealTimingControlItem] {
+        switch effectivePlan {
+        case .threeMeals:
+            return [
+                MealTimingControlItem(kind: .breakfast, keyPath: \.breakfastTime),
+                MealTimingControlItem(kind: .lunch, keyPath: \.lunchTime),
+                MealTimingControlItem(kind: .dinner, keyPath: \.dinnerTime)
+            ]
+        case .fasting168:
+            return [
+                MealTimingControlItem(kind: .fastingStart, keyPath: \.fastingStartTime),
+                MealTimingControlItem(kind: .fastingEnd, keyPath: \.fastingEndTime)
+            ]
+        }
+    }
+
+    private var statusMessage: String {
+        if !isPro {
+            let key = allowsFastingPlan ? "meal_timing.locked_note" : "meal_timing.locked_note_three_meals"
+            return TranslationManager.get(key, lang: language)
+        }
+        if authorizationDenied {
+            return TranslationManager.get("meal_timing.notification_denied", lang: language)
+        }
+        if settings.remindersEnabled && notificationsScheduled {
+            return TranslationManager.get("meal_timing.reminders_on", lang: language)
+        }
+        return TranslationManager.get("meal_timing.reminders_off", lang: language)
+    }
+
+    private var statusColor: Color {
+        if !isPro { return .secondary }
+        if authorizationDenied { return .orange }
+        return settings.remindersEnabled && notificationsScheduled ? .green : .secondary
+    }
+
+    private var statusIconName: String {
+        isPro && authorizationDenied ? "exclamationmark.triangle.fill" : "info.circle.fill"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            header
+            planSelector
+
+            if isPro {
+                reminderToggle
+                timeControls
+                fastingWindowNote
+            } else {
+                lockedState
+            }
+
+            statusRow
+        }
+        .padding()
+        .background(Color(UIColor.secondarySystemBackground))
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.gray.opacity(0.12), lineWidth: 1)
+        )
+    }
+
+    private var header: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "clock.badge.checkmark")
+                .font(.title3)
+                .foregroundStyle(.teal)
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(TranslationManager.get("meal_timing.title", lang: language))
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Text(TranslationManager.get("meal_timing.subtitle", lang: language))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+
+            Label(TranslationManager.get("meal_timing.pro_badge", lang: language), systemImage: isPro ? "crown.fill" : "lock.fill")
+                .font(.caption2.weight(.semibold))
+                .labelStyle(.titleAndIcon)
+                .foregroundStyle(isPro ? .yellow : .secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(Color(UIColor.systemBackground))
+                .clipShape(Capsule())
+        }
+    }
+
+    private var planSelector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(TranslationManager.get("meal_timing.mode", lang: language))
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(spacing: 8) {
+                    ForEach(availablePlans) { plan in
+                        planButton(plan)
+                    }
+                }
+            } else {
+                HStack(spacing: 8) {
+                    ForEach(availablePlans) { plan in
+                        planButton(plan)
+                    }
+                }
+            }
+        }
+    }
+
+    private func planButton(_ plan: MealTimingPlan) -> some View {
+        let isSelected = effectivePlan == plan
+
+        return Button {
+            guard isPro else {
+                onUpgrade()
+                return
+            }
+            settings.plan = plan
+        } label: {
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : plan.iconName)
+                    .font(.headline)
+                    .foregroundStyle(isSelected ? .teal : .secondary)
+                    .frame(width: 22)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(plan.title(lang: language))
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
+                    Text(plan.detail(lang: language))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 104 : 78, alignment: .topLeading)
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(isSelected ? Color.teal.opacity(0.13) : Color(UIColor.systemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? Color.teal.opacity(0.65) : Color.gray.opacity(0.16), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var reminderToggle: some View {
+        Toggle(isOn: binding(\.remindersEnabled)) {
+            Label(TranslationManager.get("meal_timing.reminders_enabled", lang: language), systemImage: "bell.badge.fill")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+        }
+        .tint(.teal)
+        .padding()
+        .background(Color(UIColor.systemBackground))
+        .cornerRadius(10)
+    }
+
+    @ViewBuilder
+    private var timeControls: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(spacing: 8) {
+                ForEach(timeControlItems) { item in
+                    timeControl(item)
+                }
+            }
+        } else {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 10)], spacing: 10) {
+                ForEach(timeControlItems) { item in
+                    timeControl(item)
+                }
+            }
+        }
+    }
+
+    private func timeControl(_ item: MealTimingControlItem) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(item.kind.label(lang: language), systemImage: iconName(for: item.kind))
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+
+            DatePicker("", selection: timeBinding(item.keyPath), displayedComponents: .hourAndMinute)
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 92 : 78, alignment: .leading)
+        .background(Color(UIColor.systemBackground))
+        .cornerRadius(10)
+    }
+
+    @ViewBuilder
+    private var fastingWindowNote: some View {
+        if effectivePlan == .fasting168 {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(TranslationManager.get("meal_timing.window_summary", lang: language, args: [settings.eatingWindowHours]))
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.teal)
+                Text(TranslationManager.get("meal_timing.window_hint", lang: language))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+
+    private var lockedState: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Button(action: onUpgrade) {
+                Label(TranslationManager.get("meal_timing.unlock", lang: language), systemImage: "lock.open.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.teal)
+                    .foregroundStyle(.white)
+                    .cornerRadius(10)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var statusRow: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: statusIconName)
+                .foregroundStyle(statusColor)
+                .frame(width: 18)
+            Text(statusMessage)
+                .font(.caption)
+                .foregroundStyle(statusColor)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func binding<Value>(_ keyPath: WritableKeyPath<MealTimingSettings, Value>) -> Binding<Value> {
+        Binding(
+            get: { settings[keyPath: keyPath] },
+            set: { settings[keyPath: keyPath] = $0 }
+        )
+    }
+
+    private func timeBinding(_ keyPath: WritableKeyPath<MealTimingSettings, MealClockTime>) -> Binding<Date> {
+        Binding(
+            get: { settings[keyPath: keyPath].date },
+            set: { settings[keyPath: keyPath] = MealClockTime(date: $0) }
+        )
+    }
+
+    private func iconName(for kind: MealReminderKind) -> String {
+        switch kind {
+        case .breakfast: return "sunrise.fill"
+        case .lunch: return "sun.max.fill"
+        case .dinner: return "moon.stars.fill"
+        case .fastingStart: return "play.circle.fill"
+        case .fastingEnd: return "stop.circle.fill"
+        }
+    }
+}
+
+private struct MealTimingControlItem: Identifiable {
+    let kind: MealReminderKind
+    let keyPath: WritableKeyPath<MealTimingSettings, MealClockTime>
+
+    var id: String { kind.rawValue }
 }
 
 // MARK: - [Components] Helpers
@@ -1692,6 +2196,7 @@ struct ImageSelectionView: View {
                 if let specialDietAlert {
                     SpecialDietImageAlertBadge(alert: specialDietAlert, language: language)
                         .padding(12)
+                        .zIndex(2)
                 }
             } else {
                 VStack(spacing: 10) {
@@ -1774,7 +2279,7 @@ struct SubscriptionInfoView: View {
                     HStack {
                         Text(TranslationManager.get("subscription.price", lang: language))
                         Spacer()
-                        Text(displayPackage?.localizedPriceString ?? "—").foregroundStyle(.secondary)
+                        Text(SubscriptionDisplayText.priceText(for: displayPackage, language: language)).foregroundStyle(.secondary)
                     }
                 }
 

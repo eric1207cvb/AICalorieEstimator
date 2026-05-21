@@ -214,7 +214,7 @@ struct PackageCell: View {
                     if isPurchasing {
                         ProgressView()
                     } else {
-                        Text(package.localizedPriceString)
+                        Text(SubscriptionDisplayText.priceText(for: package, language: language))
                             .bold()
                     }
                 }
@@ -234,6 +234,20 @@ struct PackageCell: View {
 }
 
 struct SubscriptionDisplayText {
+    private static let proMonthlyProductIdentifier = "tw.yian.AICalorieEstimator.pro.monthly.final"
+
+    static func priceText(for package: Package?, language: AppLanguage) -> String {
+        guard let package else {
+            return TranslationManager.get("paywall.price.monthly_market", lang: language)
+        }
+
+        if package.packageType == .monthly || package.storeProduct.productIdentifier == proMonthlyProductIdentifier {
+            return TranslationManager.get("paywall.price.monthly_market", lang: language)
+        }
+
+        return package.localizedPriceString
+    }
+
     static func planName(for package: Package?, language: AppLanguage) -> String {
         guard let package else {
             return TranslationManager.get("subscription.pro_fallback", lang: language)

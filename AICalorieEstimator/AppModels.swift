@@ -85,6 +85,168 @@ enum MedicalDietMode: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+enum MealTimingPlan: String, Codable, CaseIterable, Identifiable {
+    case threeMeals
+    case fasting168
+
+    var id: String { rawValue }
+
+    var iconName: String {
+        switch self {
+        case .threeMeals: return "fork.knife.circle.fill"
+        case .fasting168: return "clock.badge.checkmark"
+        }
+    }
+
+    func title(lang: AppLanguage) -> String {
+        switch self {
+        case .threeMeals:
+            return TranslationManager.get("meal_timing.three_meals", lang: lang)
+        case .fasting168:
+            return TranslationManager.get("meal_timing.fasting_168", lang: lang)
+        }
+    }
+
+    func detail(lang: AppLanguage) -> String {
+        switch self {
+        case .threeMeals:
+            return TranslationManager.get("meal_timing.three_meals_detail", lang: lang)
+        case .fasting168:
+            return TranslationManager.get("meal_timing.fasting_168_detail", lang: lang)
+        }
+    }
+}
+
+struct MealClockTime: Codable, Equatable, Hashable {
+    var hour: Int
+    var minute: Int
+
+    init(hour: Int, minute: Int = 0) {
+        self.hour = min(max(hour, 0), 23)
+        self.minute = min(max(minute, 0), 59)
+    }
+
+    init(date: Date, calendar: Calendar = .current) {
+        self.hour = calendar.component(.hour, from: date)
+        self.minute = calendar.component(.minute, from: date)
+    }
+
+    var date: Date {
+        var components = DateComponents()
+        components.calendar = Calendar.current
+        components.timeZone = Calendar.current.timeZone
+        components.year = 2000
+        components.month = 1
+        components.day = 1
+        components.hour = hour
+        components.minute = minute
+        return Calendar.current.date(from: components) ?? Date()
+    }
+
+    var notificationDateComponents: DateComponents {
+        var components = DateComponents()
+        components.calendar = Calendar.current
+        components.timeZone = Calendar.current.timeZone
+        components.hour = hour
+        components.minute = minute
+        return components
+    }
+
+    func localizedString(localeIdentifier: String) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: localeIdentifier)
+        formatter.timeZone = Calendar.current.timeZone
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+}
+
+enum MealReminderKind: String, CaseIterable {
+    case breakfast
+    case lunch
+    case dinner
+    case fastingStart
+    case fastingEnd
+
+    var notificationIdentifier: String {
+        "mealTimingReminder.\(rawValue)"
+    }
+
+    var titleKey: String {
+        switch self {
+        case .breakfast: return "meal_timing.notification.breakfast_title"
+        case .lunch: return "meal_timing.notification.lunch_title"
+        case .dinner: return "meal_timing.notification.dinner_title"
+        case .fastingStart: return "meal_timing.notification.fasting_start_title"
+        case .fastingEnd: return "meal_timing.notification.fasting_end_title"
+        }
+    }
+
+    var bodyKey: String {
+        switch self {
+        case .breakfast: return "meal_timing.notification.breakfast_body"
+        case .lunch: return "meal_timing.notification.lunch_body"
+        case .dinner: return "meal_timing.notification.dinner_body"
+        case .fastingStart: return "meal_timing.notification.fasting_start_body"
+        case .fastingEnd: return "meal_timing.notification.fasting_end_body"
+        }
+    }
+
+    func label(lang: AppLanguage) -> String {
+        switch self {
+        case .breakfast: return TranslationManager.get("meal_timing.breakfast", lang: lang)
+        case .lunch: return TranslationManager.get("meal_timing.lunch", lang: lang)
+        case .dinner: return TranslationManager.get("meal_timing.dinner", lang: lang)
+        case .fastingStart: return TranslationManager.get("meal_timing.fasting_start", lang: lang)
+        case .fastingEnd: return TranslationManager.get("meal_timing.fasting_end", lang: lang)
+        }
+    }
+}
+
+struct MealReminderScheduleItem: Equatable, Identifiable {
+    let kind: MealReminderKind
+    let time: MealClockTime
+
+    var id: String { kind.notificationIdentifier }
+}
+
+struct MealTimingSettings: Codable, Equatable {
+    var plan: MealTimingPlan = .threeMeals
+    var remindersEnabled: Bool = false
+    var breakfastTime = MealClockTime(hour: 8, minute: 0)
+    var lunchTime = MealClockTime(hour: 12, minute: 30)
+    var dinnerTime = MealClockTime(hour: 18, minute: 30)
+    var fastingStartTime = MealClockTime(hour: 12, minute: 0)
+    var fastingEndTime = MealClockTime(hour: 20, minute: 0)
+
+    static let defaultValue = MealTimingSettings()
+
+    var scheduleItems: [MealReminderScheduleItem] {
+        switch plan {
+        case .threeMeals:
+            return [
+                MealReminderScheduleItem(kind: .breakfast, time: breakfastTime),
+                MealReminderScheduleItem(kind: .lunch, time: lunchTime),
+                MealReminderScheduleItem(kind: .dinner, time: dinnerTime)
+            ]
+        case .fasting168:
+            return [
+                MealReminderScheduleItem(kind: .fastingStart, time: fastingStartTime),
+                MealReminderScheduleItem(kind: .fastingEnd, time: fastingEndTime)
+            ]
+        }
+    }
+
+    var eatingWindowHours: Double {
+        let startMinutes = fastingStartTime.hour * 60 + fastingStartTime.minute
+        var endMinutes = fastingEndTime.hour * 60 + fastingEndTime.minute
+        if endMinutes <= startMinutes {
+            endMinutes += 24 * 60
+        }
+        return Double(endMinutes - startMinutes) / 60.0
+    }
+}
+
 enum CKDStage: String, Codable, CaseIterable, Identifiable {
     case stage1
     case stage2
@@ -523,6 +685,39 @@ struct TranslationManager {
             "profile.sync_health": [.traditionalChinese: "同步健康資料", .english: "Sync Health", .japanese: "ヘルスケア同期"],
             "profile.sync_health_hint": [.traditionalChinese: "從 Apple Health 補上步數、活動熱量、運動與合規裝置資料。", .english: "Use Apple Health for steps, active energy, workouts, and authorized device data.", .japanese: "Appleヘルスケアから歩数、活動カロリー、運動、連携デバイスのデータを反映します。"],
 
+            "meal_timing.title": [.traditionalChinese: "飲食節奏與提醒", .english: "Meal Timing & Reminders", .japanese: "食事リズムと通知"],
+            "meal_timing.subtitle": [.traditionalChinese: "協助把拍照分析接到每日飲食紀錄，三餐提醒可用於一般與特殊模式。", .english: "Connect photo analysis with daily meal logging and three-meal reminders.", .japanese: "写真分析を毎日の食事記録につなげ、3食の通知にも使えます。"],
+            "meal_timing.pro_badge": [.traditionalChinese: "專業版", .english: "Pro", .japanese: "有料"],
+            "meal_timing.locked_note": [.traditionalChinese: "升級專業版後可啟用三餐紀錄提醒與 16:8 時間紀錄。", .english: "Upgrade to Pro to enable three-meal reminders and 16:8 timing.", .japanese: "有料プランで3食の記録通知と16:8の時間管理を利用できます。"],
+            "meal_timing.locked_note_three_meals": [.traditionalChinese: "升級專業版後可啟用早餐、午餐、晚餐紀錄提醒。", .english: "Upgrade to Pro to enable breakfast, lunch, and dinner log reminders.", .japanese: "有料プランで朝食・昼食・夕食の記録通知を利用できます。"],
+            "meal_timing.unlock": [.traditionalChinese: "解鎖飲食提醒", .english: "Unlock Reminders", .japanese: "通知を解放"],
+            "meal_timing.mode": [.traditionalChinese: "紀錄模式", .english: "Logging Mode", .japanese: "記録モード"],
+            "meal_timing.three_meals": [.traditionalChinese: "三餐提醒", .english: "Three Meals", .japanese: "3食リマインド"],
+            "meal_timing.three_meals_detail": [.traditionalChinese: "早餐、午餐、晚餐各自提醒拍照或補登。", .english: "Remind breakfast, lunch, and dinner logging separately.", .japanese: "朝食・昼食・夕食を個別に記録通知します。"],
+            "meal_timing.fasting_168": [.traditionalChinese: "16:8 時間紀錄", .english: "16:8 Timing", .japanese: "16:8 時間管理"],
+            "meal_timing.fasting_168_detail": [.traditionalChinese: "設定進食窗口開始與結束，用於一般減重紀錄。", .english: "Set eating-window start and end times for general weight-control logging.", .japanese: "一般的な体重管理記録として食事可能時間の開始・終了を設定します。"],
+            "meal_timing.reminders_enabled": [.traditionalChinese: "開啟提醒", .english: "Enable Reminders", .japanese: "通知をオン"],
+            "meal_timing.reminders_off": [.traditionalChinese: "提醒已關閉，時間設定仍會保留。", .english: "Reminders are off. Your time settings are still saved.", .japanese: "通知はオフです。時間設定は保存されます。"],
+            "meal_timing.reminders_on": [.traditionalChinese: "提醒已排程；可隨時關閉或調整時間。", .english: "Reminders are scheduled. You can turn them off or adjust times anytime.", .japanese: "通知を設定しました。いつでもオフや時間変更ができます。"],
+            "meal_timing.notification_denied": [.traditionalChinese: "系統通知尚未開啟，請到 iOS 設定允許通知，或先關閉提醒。", .english: "Notifications are not allowed yet. Enable them in iOS Settings or turn reminders off.", .japanese: "通知が許可されていません。iOS設定で許可するか、通知をオフにしてください。"],
+            "meal_timing.breakfast": [.traditionalChinese: "早餐", .english: "Breakfast", .japanese: "朝食"],
+            "meal_timing.lunch": [.traditionalChinese: "午餐", .english: "Lunch", .japanese: "昼食"],
+            "meal_timing.dinner": [.traditionalChinese: "晚餐", .english: "Dinner", .japanese: "夕食"],
+            "meal_timing.fasting_start": [.traditionalChinese: "進食窗口開始", .english: "Eating Window Starts", .japanese: "食事可能時間の開始"],
+            "meal_timing.fasting_end": [.traditionalChinese: "進食窗口結束", .english: "Eating Window Ends", .japanese: "食事可能時間の終了"],
+            "meal_timing.window_summary": [.traditionalChinese: "進食窗口約 %.1f 小時", .english: "Eating window: about %.1f hours", .japanese: "食事可能時間：約 %.1f 時間"],
+            "meal_timing.window_hint": [.traditionalChinese: "16:8 通常接近 8 小時進食窗口；請依生活作息調整，若不適請停止。", .english: "16:8 usually uses an eating window near 8 hours. Adjust to your routine and stop if it does not feel right.", .japanese: "16:8は通常、約8時間の食事可能時間です。生活に合わせ、不調があれば中止してください。"],
+            "meal_timing.notification.breakfast_title": [.traditionalChinese: "早餐紀錄提醒", .english: "Breakfast Log Reminder", .japanese: "朝食記録の通知"],
+            "meal_timing.notification.breakfast_body": [.traditionalChinese: "到你設定的早餐時間了。拍照或從相簿記錄這餐。", .english: "It is your breakfast time. Take or choose a photo to log this meal.", .japanese: "設定した朝食時間です。写真を撮るか選んで記録しましょう。"],
+            "meal_timing.notification.lunch_title": [.traditionalChinese: "午餐紀錄提醒", .english: "Lunch Log Reminder", .japanese: "昼食記録の通知"],
+            "meal_timing.notification.lunch_body": [.traditionalChinese: "午餐時間到了，記錄餐食可讓今日熱量更完整。", .english: "Lunch time. Logging your meal keeps today's calories more complete.", .japanese: "昼食時間です。記録すると今日のカロリー管理がしやすくなります。"],
+            "meal_timing.notification.dinner_title": [.traditionalChinese: "晚餐紀錄提醒", .english: "Dinner Log Reminder", .japanese: "夕食記録の通知"],
+            "meal_timing.notification.dinner_body": [.traditionalChinese: "到晚餐提醒時間了。完成記錄後，今日攝取會更好追蹤。", .english: "Dinner reminder time. Logging now helps complete today's intake record.", .japanese: "夕食の通知時間です。記録すると今日の摂取量を確認しやすくなります。"],
+            "meal_timing.notification.fasting_start_title": [.traditionalChinese: "16:8 進食窗口開始", .english: "16:8 Eating Window Starts", .japanese: "16:8 食事可能時間の開始"],
+            "meal_timing.notification.fasting_start_body": [.traditionalChinese: "你設定的進食時間開始了。記錄第一餐可幫助今天的熱量控管。", .english: "Your eating window has started. Logging the first meal helps track today's intake.", .japanese: "設定した食事可能時間が始まりました。最初の食事を記録しましょう。"],
+            "meal_timing.notification.fasting_end_title": [.traditionalChinese: "16:8 進食窗口結束", .english: "16:8 Eating Window Ends", .japanese: "16:8 食事可能時間の終了"],
+            "meal_timing.notification.fasting_end_body": [.traditionalChinese: "你設定的進食窗口結束了。可確認今天是否已完成餐食紀錄。", .english: "Your eating window has ended. Check whether today's meal logs are complete.", .japanese: "設定した食事可能時間が終了しました。今日の食事記録を確認しましょう。"],
+
             "status.pro_active": [.traditionalChinese: "👑 專業版會員", .english: "👑 Pro Member", .japanese: "👑 有料プラン有効"],
             "status.free_remaining": [.traditionalChinese: "免費額度剩餘 %d 次", .english: "%d Free Scans Left", .japanese: "残り %d 回"],
             "status.free_exhausted": [.traditionalChinese: "免費額度已用完", .english: "Free Limit Reached", .japanese: "無料枠終了"],
@@ -562,6 +757,7 @@ struct TranslationManager {
             "paywall.plan.annual": [.traditionalChinese: "年度方案", .english: "Annual Plan", .japanese: "年額プラン"],
             "paywall.plan.lifetime": [.traditionalChinese: "永久方案", .english: "Lifetime Plan", .japanese: "買い切りプラン"],
             "paywall.plan.standard": [.traditionalChinese: "訂閱方案", .english: "Subscription Plan", .japanese: "サブスクリプションプラン"],
+            "paywall.price.monthly_market": [.traditionalChinese: "$60.00", .english: "$1.99", .japanese: "¥300.00"],
             "paywall.period.day": [.traditionalChinese: "每日", .english: "per day", .japanese: "1日ごと"],
             "paywall.period.week": [.traditionalChinese: "每週", .english: "per week", .japanese: "1週間ごと"],
             "paywall.period.month": [.traditionalChinese: "每月", .english: "per month", .japanese: "1か月ごと"],
@@ -758,10 +954,11 @@ struct SpecialDietFoodAlert: Equatable {
             concerns = unique(detected)
             riskLevel = .caution
         case .chronicKidneyDisease:
+            let processedCarbByFood = containsAny(text, keywords: processedCarbSnackKeywords)
             var detected: [SpecialDietFoodConcern] = []
-            if containsAny(text, keywords: ckdHighSodiumKeywords) { detected.append(.highSodium) }
+            if containsAny(text, keywords: ckdHighSodiumKeywords) || processedCarbByFood { detected.append(.highSodium) }
             if containsAny(text, keywords: ckdHighPotassiumKeywords) { detected.append(.highPotassium) }
-            if containsAny(text, keywords: ckdHighPhosphorusKeywords) { detected.append(.highPhosphorus) }
+            if containsAny(text, keywords: ckdHighPhosphorusKeywords) || processedCarbByFood { detected.append(.highPhosphorus) }
             if (data.macros?.protein ?? 0) >= ckdProteinSignalThreshold(for: profile.ckdStage) { detected.append(.highProtein) }
             concerns = unique(detected)
             riskLevel = profile.ckdStage.isAdvanced ? .alert : .caution
@@ -880,33 +1077,43 @@ struct SpecialDietFoodAlert: Equatable {
     private static let processedCarbSnackKeywords = [
         "chips", "potato chips", "crisps", "cracker", "pretzel", "snack", "instant noodle", "instant ramen",
         "breakfast cereal", "granola", "oatmeal packet", "sweetened cereal", "packaged snack", "ultra-processed",
+        "lays", "lay's", "pringles", "ruffles", "doritos", "cheetos",
         "洋芋片", "薯片", "餅乾", "蘇打餅", "洋芋", "零食", "泡麵", "速食麵", "即食麵", "早餐穀片", "穀片", "即食燕麥", "加工澱粉",
-        "ポテトチップス", "チップス", "クラッカー", "スナック", "インスタント麺", "インスタントラーメン", "シリアル", "グラノーラ", "加工炭水化物"
+        "樂事", "乐事", "樂連連", "乐连连", "品客", "多力多滋", "奇多",
+        "ポテトチップス", "チップス", "クラッカー", "スナック", "インスタント麺", "インスタントラーメン", "シリアル", "グラノーラ", "加工炭水化物",
+        "レイズ", "プリングルズ", "ドリトス", "チートス"
     ]
 
     private static let ckdHighSodiumKeywords = [
         "ramen", "instant", "soup", "sauce", "soy sauce", "bacon", "ham", "sausage", "deli", "chips",
         "potato chips", "crisps", "cracker", "pickle", "fast food", "processed", "salted", "packaged snack",
+        "lays", "lay's", "pringles", "ruffles", "doritos", "cheetos",
         "泡麵", "拉麵", "湯", "醬", "醬油", "培根", "火腿", "香腸", "滷", "鹹酥", "洋芋片", "薯片", "餅乾", "零食", "加工", "醃",
-        "ラーメン", "インスタント", "スープ", "醤油", "ソース", "ベーコン", "ハム", "ソーセージ", "ポテトチップス", "チップス", "クラッカー", "スナック", "加工", "漬物"
+        "樂事", "乐事", "樂連連", "乐连连", "品客", "多力多滋", "奇多",
+        "ラーメン", "インスタント", "スープ", "醤油", "ソース", "ベーコン", "ハム", "ソーセージ", "ポテトチップス", "チップス", "クラッカー", "スナック", "加工", "漬物",
+        "レイズ", "プリングルズ", "ドリトス", "チートス"
     ]
 
     private static let ckdHighPotassiumKeywords = [
         "banana", "avocado", "potato", "potato chips", "chips", "crisps", "sweet potato", "tomato", "spinach", "beans", "legumes",
         "dried fruit", "coconut water", "orange", "kiwi", "melon", "pumpkin", "taro",
-        "oat", "oats", "oatmeal", "rolled oats", "granola", "cereal",
+        "oat", "oats", "oatmeal", "rolled oats", "granola", "cereal", "lays", "lay's",
         "香蕉", "酪梨", "馬鈴薯", "洋芋", "洋芋片", "薯片", "地瓜", "番茄", "菠菜", "豆", "乾果", "椰子水", "柳橙", "橘子", "奇異果", "哈密瓜", "南瓜", "芋頭", "燕麥", "燕麥片", "穀片",
+        "樂事", "乐事", "樂連連", "乐连连",
         "バナナ", "アボカド", "じゃがいも", "ポテトチップス", "チップス", "さつまいも", "トマト", "ほうれん草", "豆", "ドライフルーツ",
         "ココナッツウォーター", "オレンジ", "キウイ", "メロン", "かぼちゃ", "里芋",
-        "オートミール", "オーツ", "グラノーラ", "シリアル"
+        "オートミール", "オーツ", "グラノーラ", "シリアル", "レイズ"
     ]
 
     private static let ckdHighPhosphorusKeywords = [
         "cola", "cheese", "dairy", "milk", "yogurt", "organ", "liver", "nuts", "seeds",
         "processed meat", "sausage", "ham", "bacon", "phosphate", "phosphorus", "chips", "potato chips", "crisps",
         "oat", "oats", "oatmeal", "rolled oats", "granola", "cereal", "packaged snack", "ultra-processed",
+        "lays", "lay's", "pringles", "ruffles", "doritos", "cheetos",
         "可樂", "起司", "乳製", "牛奶", "優格", "內臟", "肝", "堅果", "種子", "加工肉", "香腸", "火腿", "培根", "磷酸鹽", "高磷", "洋芋片", "薯片", "零食", "燕麥", "燕麥片", "穀片",
-        "コーラ", "チーズ", "乳製品", "牛乳", "ヨーグルト", "内臓", "レバー", "ナッツ", "種", "加工肉", "ソーセージ", "ハム", "ベーコン", "リン酸塩", "高リン", "ポテトチップス", "チップス", "スナック", "オートミール", "オーツ", "グラノーラ", "シリアル"
+        "樂事", "乐事", "樂連連", "乐连连", "品客", "多力多滋", "奇多",
+        "コーラ", "チーズ", "乳製品", "牛乳", "ヨーグルト", "内臓", "レバー", "ナッツ", "種", "加工肉", "ソーセージ", "ハム", "ベーコン", "リン酸塩", "高リン", "ポテトチップス", "チップス", "スナック", "オートミール", "オーツ", "グラノーラ", "シリアル",
+        "レイズ", "プリングルズ", "ドリトス", "チートス"
     ]
 }
 

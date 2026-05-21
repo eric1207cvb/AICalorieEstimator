@@ -5,6 +5,39 @@
 "button.take_photo" = "拍照估算";
 "button.select_album" = "從相簿選取";
 "button.health_check" = "測試連線";
+"camera.close" = "關閉相機";
+"meal_timing.title" = "飲食節奏與提醒";
+"meal_timing.subtitle" = "協助把拍照分析接到每日飲食紀錄，三餐提醒可用於一般與特殊模式。";
+"meal_timing.pro_badge" = "專業版";
+"meal_timing.locked_note" = "升級專業版後可啟用三餐紀錄提醒與 16:8 時間紀錄。";
+"meal_timing.locked_note_three_meals" = "升級專業版後可啟用早餐、午餐、晚餐紀錄提醒。";
+"meal_timing.unlock" = "解鎖飲食提醒";
+"meal_timing.mode" = "紀錄模式";
+"meal_timing.three_meals" = "三餐提醒";
+"meal_timing.three_meals_detail" = "早餐、午餐、晚餐各自提醒拍照或補登。";
+"meal_timing.fasting_168" = "16:8 時間紀錄";
+"meal_timing.fasting_168_detail" = "設定進食窗口開始與結束，用於一般減重紀錄。";
+"meal_timing.reminders_enabled" = "開啟提醒";
+"meal_timing.reminders_off" = "提醒已關閉，時間設定仍會保留。";
+"meal_timing.reminders_on" = "提醒已排程；可隨時關閉或調整時間。";
+"meal_timing.notification_denied" = "系統通知尚未開啟，請到 iOS 設定允許通知，或先關閉提醒。";
+"meal_timing.breakfast" = "早餐";
+"meal_timing.lunch" = "午餐";
+"meal_timing.dinner" = "晚餐";
+"meal_timing.fasting_start" = "進食窗口開始";
+"meal_timing.fasting_end" = "進食窗口結束";
+"meal_timing.window_summary" = "進食窗口約 %.1f 小時";
+"meal_timing.window_hint" = "16:8 通常接近 8 小時進食窗口；請依生活作息調整，若不適請停止。";
+"meal_timing.notification.breakfast_title" = "早餐紀錄提醒";
+"meal_timing.notification.breakfast_body" = "到你設定的早餐時間了。拍照或從相簿記錄這餐。";
+"meal_timing.notification.lunch_title" = "午餐紀錄提醒";
+"meal_timing.notification.lunch_body" = "午餐時間到了，記錄餐食可讓今日熱量更完整。";
+"meal_timing.notification.dinner_title" = "晚餐紀錄提醒";
+"meal_timing.notification.dinner_body" = "到晚餐提醒時間了。完成記錄後，今日攝取會更好追蹤。";
+"meal_timing.notification.fasting_start_title" = "16:8 進食窗口開始";
+"meal_timing.notification.fasting_start_body" = "你設定的進食時間開始了。記錄第一餐可幫助今天的熱量控管。";
+"meal_timing.notification.fasting_end_title" = "16:8 進食窗口結束";
+"meal_timing.notification.fasting_end_body" = "你設定的進食窗口結束了。可確認今天是否已完成餐食紀錄。";
 
 /* 介面標籤 */
 "label.analysis_result" = "分析結果";
@@ -40,6 +73,7 @@
 "result.health_advice" = "健康建議";
 
 /* 訂閱狀態 */
+"paywall.price.monthly_market" = "$60.00";
 "status.pro_active" = "會員狀態：專業版已解鎖！";
 "status.free_remaining %lld" = "免費試用剩餘次數：%lld 次";
 "status.free_exhausted" = "免費額度已用完。請升級以繼續使用。";
